@@ -1,4 +1,4 @@
-# Modify the following in order to allow for sending of performance results to confluence tables
+# Modify the following in order to allow for sending of performance results to confluence tables, and rename it to .env
 #ATLASSIAN_SITE=<PLACE HOLDER>
 #CONFLUENCE_SPACE_ID=<PLACE HOLDER>
 #ATLASSIAN_EMAIL=<PLACE HOLDER>
