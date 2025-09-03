@@ -9,8 +9,8 @@ from reframe.core.builtins import sanity_function, parameter, run_before, run_af
 
 from benchmarks.modules.utils import SpackTest
 
-NUMBER_OF_TRANSFORMS = '1'
-NUMBER_OF_REPEATS = '1'
+NUMBER_OF_TRANSFORMS = '7'
+NUMBER_OF_REPEATS = '10'
 
 class FfftBenmchmarkBase(SpackTest):
     # Systems and programming environments where to run this benchmark.
