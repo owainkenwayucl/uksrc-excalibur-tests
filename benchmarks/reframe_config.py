@@ -1,6 +1,13 @@
-import os
+import os, sys, pathlib
+from dotenv import load_dotenv
 import reframe.core.launchers.mpi as rfmmpi
+from pathlib import Path
 
+# Ensure the directory containing reframe_config.py is on sys.path
+CONFIG_DIR = Path(__file__).resolve().parent
+if str(CONFIG_DIR) not in sys.path:
+    sys.path.insert(0, str(CONFIG_DIR))
+from modules.perf_logs import send_to_table
 
 # OpenMPI Launcher on COSMA7 Rockport network:
 # <https://www.dur.ac.uk/icc/cosma/support/rockport/>.
@@ -36,6 +43,28 @@ def spack_root_to_path():
     # `spack_bindir` isn't in PATH already, prepend to it.
     return spack_bindir + os.path.pathsep + path
 
+
+def _json_and_send(record, extras, ignore_keys):
+    try:
+        content = getattr(record, '__rfm_check__', None).output_dict_list
+        bench_name = getattr(record, '__rfm_check__', None).bench_name
+        load_dotenv(Path(__file__).parent / ".env")
+        for output in content:
+            print("###################")
+            print(f"Bench name: {bench_name}")
+            print("###################")
+            send_to_table(
+                os.getenv("ATLASSIAN_SITE"),
+                os.getenv("CONFLUENCE_SPACE_ID"),
+                os.getenv("ATLASSIAN_EMAIL"),
+                os.getenv("ATLASSIAN_API_TOKEN"),
+                bench_name,
+                output
+            )
+    except Exception as e:
+        # Avoid crashing ReFrame on logging paths; record and continue.
+        print(f"[perflog delegate] ERROR: {e}")
+    return None
 
 site_configuration = {
     'systems': [
@@ -799,6 +828,28 @@ site_configuration = {
                         '%(check_perf_upper_thres)s|'
                     ),
                     'append': True
+                },
+                {
+                    'type': 'httpjson',
+                    'url': 'https://uksrc.atlassian.net',
+                    'level': 'info',
+                    'json_formatter': _json_and_send,
+                    'debug': False,
+                    'extras': {'facility': 'reframe'},
+                    'ignore_keys': [],
+                }
+            ]
+        },
+        {
+            'handlers_perflog': [
+                {
+                    'type': 'httpjson',
+                    'url': 'https://uksrc.atlassian.net',
+                    'level': 'info',
+                    'json_formatter': _json_and_send,
+                    'debug': False,
+                    'extras': {'facility': 'reframe'},
+                    'ignore_keys': [],
                 }
             ]
         }

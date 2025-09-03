@@ -14,7 +14,8 @@ class FftBench(CMakePackage):
     variant("cuda", default=False, description="Enable cuFFT Library.")
     variant("rocm", default=False, description="Enable rocFFT Library.")
 
-    depends_on("cmake@3.18:", type="build")
+    depends_on("cmake", type="build")
+    depends_on("llvm", type="build")
     depends_on("openmpi", type="build")
     depends_on("fftw")
     #    depends_on("mkl", when="+mkl")
@@ -42,18 +43,16 @@ class FftBench(CMakePackage):
         if self.spec.satisfies("+rocm"):
             # If the project *requires* the hip compiler driver, set it here.
             # Otherwise, prefer Spack's cxx wrapper and just pass HIP/ROCM dirs.
-            hipcc = join_path(self.spec["hip"].prefix.bin, "hipcc")
-            args.append(self.define("CMAKE_CXX_COMPILER", hipcc))
+            args.append(self.define("CMAKE_CXX_COMPILER", join_path(self.spec["hip"].prefix.bin, "hipcc")))
             args.append(self.define_from_variant("ROC_FFT", "rocm"))
             args.append(self.define("ROCM_DIR", self.spec["rocfft"].prefix))
             args.append(self.define("HIP_DIR", self.spec["hip"].prefix))
-        #        else:
-        #            args.append(self.define("CMAKE_CXX_COMPILER", join_path(self.spec["llvm"].prefix.bin, "clang++")))
+        else:
+            args.append(self.define("CMAKE_CXX_COMPILER", join_path(self.spec["llvm"].prefix.bin, "clang++")))
         return args
 
     def install(self, spec, prefix):
         mkdirp(prefix)
         mkdirp(prefix.bin)
-
         with working_dir(self.build_directory):
             install("FFT_Bench", prefix.bin)
