@@ -1,5 +1,4 @@
 import os, sys, pathlib
-from dotenv import load_dotenv
 import reframe.core.launchers.mpi as rfmmpi
 from pathlib import Path
 
@@ -48,7 +47,14 @@ def _json_and_send(record, extras, ignore_keys):
     try:
         content = getattr(record, '__rfm_check__', None).output_dict_list
         bench_name = getattr(record, '__rfm_check__', None).bench_name
-        load_dotenv(Path(__file__).parent / ".env")
+        with open(Path(__file__).parent / ".env") as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith("#"):
+                    continue
+                key, value = line.split("=", 1)
+                key = key.strip()
+                os.environ[key] = value.strip().strip('"').strip("'")
         for output in content:
             print("###################")
             print(f"Bench name: {bench_name}")
