@@ -43,6 +43,7 @@ def spack_root_to_path():
     return spack_bindir + os.path.pathsep + path
 
 
+# _json_and_send allows for the sending of data to a Confluence table.
 def _json_and_send(record, extras, ignore_keys):
     try:
         content = getattr(record, '__rfm_check__', None).output_dict_list
@@ -56,9 +57,6 @@ def _json_and_send(record, extras, ignore_keys):
                 key = key.strip()
                 os.environ[key] = value.strip().strip('"').strip("'")
         for output in content:
-            print("###################")
-            print(f"Bench name: {bench_name}")
-            print("###################")
             send_to_table(
                 os.getenv("ATLASSIAN_SITE"),
                 os.getenv("CONFLUENCE_SPACE_ID"),
@@ -71,6 +69,7 @@ def _json_and_send(record, extras, ignore_keys):
         # Avoid crashing ReFrame on logging paths; record and continue.
         print(f"[perflog delegate] ERROR: {e}")
     return None
+
 
 site_configuration = {
     'systems': [
@@ -835,19 +834,6 @@ site_configuration = {
                     ),
                     'append': True
                 },
-                {
-                    'type': 'httpjson',
-                    'url': 'https://uksrc.atlassian.net',
-                    'level': 'info',
-                    'json_formatter': _json_and_send,
-                    'debug': False,
-                    'extras': {'facility': 'reframe'},
-                    'ignore_keys': [],
-                }
-            ]
-        },
-        {
-            'handlers_perflog': [
                 {
                     'type': 'httpjson',
                     'url': 'https://uksrc.atlassian.net',

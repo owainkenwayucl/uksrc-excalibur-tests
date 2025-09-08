@@ -1,4 +1,4 @@
-import pathlib
+import pathlib, os
 
 from datetime import datetime as dt
 import reframe.utility.sanity as sn
@@ -61,7 +61,7 @@ class FfftBenmchmarkBase(SpackTest):
 
     @sanity_function
     def validate(self):
-        return sn.assert_true(sn.path_exists(self.fft_output_file))
+        return sn.assert_true(os.path.isfile(self.stagedir + '/' + self.fft_output_file))
 
     @run_before("performance")
     def output_list_dict(self):
@@ -133,7 +133,7 @@ class FftBenchmarkCUDA(FfftBenmchmarkBase):
     spack_logfile = 'spack-build-log-cuda.txt'
     num_gpus_per_node = 1
 
-    fft_output_file = '"FFTW_cuFFT.txt"'
+    fft_output_file = 'FFTW_cuFFT.txt'
     executable_opts = ["-o", fft_output_file, "-f", "-n", "-r", NUMBER_OF_TRANSFORMS, "-c", NUMBER_OF_REPEATS]
 
     @run_after('setup')
@@ -151,7 +151,7 @@ class FftBenchmarkROCM(FfftBenmchmarkBase):
     spack_logfile = 'spack-build-log-rocm.txt'
     num_gpus_per_node = 1
 
-    fft_output_file = '"FFTW_rocFFT.txt"'
+    fft_output_file = 'FFTW_rocFFT.txt'
     executable_opts = ["-o", fft_output_file, "-f", "-a", "-r", NUMBER_OF_TRANSFORMS, "-c", NUMBER_OF_REPEATS]
 
     @run_after('setup')
