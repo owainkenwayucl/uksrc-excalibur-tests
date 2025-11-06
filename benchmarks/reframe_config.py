@@ -726,7 +726,7 @@ site_configuration = {
                 {
                     'name': 'default',
                     'scheduler': 'local',
-                    'launcher': 'mpirun',
+                    'launcher': 'local',
                     'environs': ['default'],
                 },
             ]
