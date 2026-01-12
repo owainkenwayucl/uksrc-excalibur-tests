@@ -42,9 +42,9 @@ class MicrobenchEOR(rfm.RunOnlyRegressionTest):
 
     @run_before('setup')
     def download_data(self):
-        data_set = os.path.join(self.eor_data_dir, "")
+        data_set = os.path.join(self.eor_data_dir, "NF_HERA_Dipole_power_beam_healpix.fits")
         if not os.path.isfile(data_set):
-            file = f""
+            file = f"https://object.arcus.openstack.hpc.cam.ac.uk/swift/v1/AUTH_7ac3c0a502cd46c783b2128116165566/microbench_data/EoR/NF_HERA_Dipole_power_beam_healpix.fits"
             file_name = data_set
             subprocess.run(["wget", "-O", file_name, file])
 
@@ -66,13 +66,12 @@ class MicrobenchEOR(rfm.RunOnlyRegressionTest):
 
     @sanity_function
     def validate(self):
-        with open(os.path.join(self.output_dir, "rfm_job.out")) as myfile:
+        with open(os.path.join(self.stagedir, "rfm_job.out")) as myfile:
             if "All PSPEC MERGE jobs ran through" in myfile.read():
                 return True
             else:
                 return False
 
-#    @run_after('sanity')
-#    def free_space(self):
-#        subprocess.run(["rm", "-rf", os.path.join(self.outputdir, "intermediate-products")])
-#        subprocess.run(f"rm {self.outputdir}/*.fits", shell=True, check=True)
+    @run_after('sanity')
+    def free_space(self):
+        subprocess.run(["rm", "-rf", os.path.join(self.outputdir, "outputs")])

@@ -63,14 +63,21 @@ class MicrobenchLOFARINT(rfm.RunOnlyRegressionTest):
 
     @run_before('setup')
     def download_data(self):
-        data_set = os.path.join(self.lofarint_data_dir, "L693725_SB282_uv.MS")
-        if not os.path.exists(data_set):
-            for i in range(1,40):
-                file = f"https://zenodo.org/records/17236157/files/LOFARINT_Data_{i}.tar?download=1"
-                file_name = f"{self.lofarint_data_dir}/LOFARINT_Data_{i}.tar"
-                subprocess.call(["wget", "-O", file_name, file])
-            subprocess.call(["cat", "LOFARINT_Data_{1..39}.tar", "|", "tar", "-xif", "-"])
-            subprocess.call(["rm", f"{self.lofarint_data_dir}/LOFARINT_Data_*.tar"])
+        if not os.path.isdir(os.path.join(self.lofarint_data_dir, "L693725_SB282_uv.MS")):
+            file = f"https://object.arcus.openstack.hpc.cam.ac.uk/swift/v1/AUTH_7ac3c0a502cd46c783b2128116165566/microbench_data/LOFARINT"
+            subprocess.call(["wget", "-O", self.lofarint_data_dir, file])
+            og_dir = os.getcwd()
+            os.chdir(os.path.join(self.lofarint_data_dir, "L693725_SB282_uv.MS"))
+            subprocess.run(
+                ["cat",
+                 "table.f3.tar.gz.*",
+                 "|",
+                 "tar",
+                 "xzvf",
+                 "-",
+                 ]
+            )
+            os.chdir(og_dir)
 
     @run_after('setup')
     def add_prerun_cmds(self):
@@ -181,8 +188,8 @@ class MicrobenchLOFARINT(rfm.RunOnlyRegressionTest):
 
     @sanity_function
     def validate(self):
-        with open(os.path.join(self.output_dir, "rfm_job.err")) as myfile:
-            if "CWL run complete!" in myfile.read():
+        with open(os.path.join(self.stagedir, "rfm_job.err")) as myfile:
+            if "Success: True" in myfile.read():
                 return True
             else:
                 return False
