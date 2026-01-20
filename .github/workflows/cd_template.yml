@@ -1,4 +1,4 @@
-name: Deploy tests to remote runnter
+name: Template for tests to remote runnter
 run-name: ${{ github.actor }} is running.
 on:
   workflow_dispatch: {}
