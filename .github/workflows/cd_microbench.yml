@@ -45,9 +45,9 @@ jobs:
 
   run-lofarint: # Name of test to run
     runs-on: self-hosted # Run on the self-hosted runner
+    needs: install-dependencies
     steps:
       - name: Install Toil
-        needs: install-dependencies
         shell: bash
         run: |
           export TOIL_PATH=$(which toil-cwl-runner)
@@ -82,9 +82,9 @@ jobs:
 
   run-eor:
     runs-on: self-hosted # Run on the self-hosted runner
+    needs: install-dependencies
     steps:
       - name: Run EoR Microbenchmark
-        needs: install-dependencies
         id: runcall
         # Run should contain all the lines of code in order to run the test
         shell: bash
