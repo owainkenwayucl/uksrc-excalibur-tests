@@ -10,6 +10,7 @@ from reframe.core.builtins import sanity_function, parameter, run_before, run_af
 
 @rfm.simple_test
 class MicrobenchLOFARINT(rfm.RunOnlyRegressionTest):
+    bench_name="MicrobenchLOFARINT"
     valid_systems = ['*']
     valid_prog_environs = ['default']
 
@@ -20,6 +21,7 @@ class MicrobenchLOFARINT(rfm.RunOnlyRegressionTest):
     lofarint_data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "LOFARINT_Data")
     os.makedirs(lofarint_data_dir, exist_ok=True)
     vlbi_singularity_dir = os.path.join(lofarint_code_dir, "singularity_images")
+    os.makedirs(vlbi_singularity_dir, exist_ok=True)
 
     tasks = parameter([1])
     num_tasks_per_node = 1
@@ -36,7 +38,7 @@ class MicrobenchLOFARINT(rfm.RunOnlyRegressionTest):
     @run_before('setup')
     def download_linc(self):
         if not os.path.exists(self.LINC_dir):
-            subprocess.call(["git", "clone", "https://git.astron.nl/RD/LINC.git", "--branch", "v5.1", self.LINC_dir])
+            subprocess.call(["git", "clone", "https://git.astron.nl/RD/LINC.git", "--branch", "releases/v5.1", self.LINC_dir])
 
     @run_before('setup')
     def download_vlbi(self):
@@ -47,7 +49,7 @@ class MicrobenchLOFARINT(rfm.RunOnlyRegressionTest):
     def download_singularity_image(self):
         vlbi_singularity_sif = os.path.join(self.vlbi_singularity_dir, "flocs_v6.0.0_sandybridge_sandybridge.sif")
         if not os.path.isfile(vlbi_singularity_sif):
-            subprocess.call(["wget", "-O", vlbi_singularity_sif, "https://lofar-webdav.grid.sara.nl/software/shub_mirror/tikk3r/lofar-grid-hpccloud/intel/flocs_v6.0.0_sandybridge_sandybridge.sif?action=show"])
+            subprocess.call(["wget", "-O", vlbi_singularity_sif, "https://public.spider.surfsara.nl/project/lofarvwf/fsweijen/containers/flocs_v6.0.0_sandybridge_sandybridge.sif"])
 
         vlbi_singularity_link = os.path.join(self.vlbi_singularity_dir, "vlbi-cwl.sif")
         if not os.path.isfile(vlbi_singularity_link):
@@ -64,19 +66,11 @@ class MicrobenchLOFARINT(rfm.RunOnlyRegressionTest):
     @run_before('setup')
     def download_data(self):
         if not os.path.isdir(os.path.join(self.lofarint_data_dir, "L693725_SB282_uv.MS")):
-            file = f"https://object.arcus.openstack.hpc.cam.ac.uk/swift/v1/AUTH_7ac3c0a502cd46c783b2128116165566/microbench_data/LOFARINT"
-            subprocess.call(["wget", "-O", self.lofarint_data_dir, file])
+            Address = "https://object.arcus.openstack.hpc.cam.ac.uk/swift/v1/AUTH_7ac3c0a502cd46c783b2128116165566/microbench_data/"
+            subprocess.call("wget -qO- {Address} | grep '^LOFARINT/' | xargs -n1 -I".format(Address=Address)+"{} wget -nH --cut-dirs=5 -R 'index.html' -x -P "+"{DataDir} {Address}".format(Address=Address, DataDir=self.lofarint_data_dir)+"{}", shell=True)
             og_dir = os.getcwd()
             os.chdir(os.path.join(self.lofarint_data_dir, "L693725_SB282_uv.MS"))
-            subprocess.run(
-                ["cat",
-                 "table.f3.tar.gz.*",
-                 "|",
-                 "tar",
-                 "xzvf",
-                 "-",
-                 ]
-            )
+            subprocess.run("cat table.f3.tar.gz.* | tar xzvf -", shell=True)
             os.chdir(og_dir)
 
     @run_after('setup')

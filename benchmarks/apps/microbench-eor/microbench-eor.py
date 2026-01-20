@@ -11,6 +11,7 @@ from astropy.io import fits
 
 @rfm.simple_test
 class MicrobenchEOR(rfm.RunOnlyRegressionTest):
+    bench_name="MicrobenchEOR"
     valid_systems = ['*']
     valid_prog_environs = ['default']
 
