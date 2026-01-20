@@ -1,0 +1,119 @@
+name: Deploy tests to remote runner
+run-name: ${{ github.actor }} is running.
+on:
+  workflow_dispatch: {}
+#  schedule:
+#    - cron: "0 0 * * 1"
+# "Minute Hour DayOfMonth(1-31) Month(1-12) DayOfWeek(0-6)"
+
+jobs:
+  run-lofarint: # Name of test to run
+    runs-on: ubuntu-latest # Run on the self-hosted runner
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Python Setup
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10.6'
+          cache: 'pip'
+
+      - name: Install Excalibur-tests
+        shell: bash
+        run: |
+          pip install -e .
+          pip install pandas          
+
+      - name: Find & Install Spack
+        id: fspack
+        working-directory: ${{runner.workspace}}
+        shell: bash
+        run: |
+          export SPACK_PATH=$(which spack)
+          if [ -z $SPACK_PATH ]; then
+            git clone --depth=1 --branch=releases/v1.1 https://github.com/spack/spack.git
+            cd spack
+            echo "PATH=${PWD}/bin:${PATH}" >> "${GITHUB_ENV}"
+            export SPACK_PATH=$(which spack)
+            echo "spack_path=$SPACK_PATH" >> "$GITHUB_OUTPUT"
+          else
+            echo "spack_path=$SPACK_PATH" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install Toil
+        shell: bash
+        run: |
+          export TOIL_PATH=$(which spack)
+          pip install toil[cwl]
+
+      - name: Install Apptainer
+        shell: bash
+        run: |
+          apt update
+          apt install -y software-properties-common
+          add-apt-repository -y ppa:apptainer/ppa
+          apt update
+          apt install -y apptainer
+
+      - name: Run Test
+        id: runcall
+        # Run should contain all the lines of code in order to run the test
+        shell: bash
+        run: |
+          export RFM_CONFIG_FILES="${PWD}/benchmarks/reframe_config.py"
+          export RFM_USE_LOGIN_SHELL="true"
+          export SPACK_ROOT="${{ steps.changed.outputs.installed }}"
+          if [ -f "${SPACK_ROOT}/share/spack/setup-env.sh" ]; then
+            source "${SPACK_ROOT}/share/spack/setup-env.sh"
+          fi
+          reframe --skip-sanity-check -c ./benchmarks/apps/microbench-lofarint -n MicrobenchLOFARINT --keep-stage-files -r
+
+  run-eor:
+    runs-on: ubuntu-latest # Run on the self-hosted runner
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Python Setup
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10.6'
+          cache: 'pip'
+
+      - name: Install Excalibur-tests
+        shell: bash
+        run: |
+          pip install -e .
+          pip install pandas
+
+      - name: Install Spack
+        shell: bash
+        working-directory: ${{runner.workspace}}
+        run: |
+          git clone --depth=1 --branch=releases/v1.1 https://github.com/spack/spack.git
+          cd spack
+          echo "PATH=${PWD}/bin:${PATH}" >> "${GITHUB_ENV}"
+
+      - name: Find Spack
+        id: fspack
+        shell: bash
+        run: |
+          export SPACK_PATH=$(which spack)
+          if [ -z $SPACK_PATH ]; then
+            echo "installed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "installed=true" >> "$GITHUB_OUTPUT"
+            echo "spack_path=$SPACK_PATH" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run stuff
+        id: runcall
+        # Run should contain all the lines of code in order to run the test
+        shell: bash
+        run: |
+          export RFM_CONFIG_FILES="${PWD}/benchmarks/reframe_config.py"
+          export RFM_USE_LOGIN_SHELL="true"
+          export SPACK_ROOT="${{ steps.changed.outputs.installed }}"
+          if [ -f "${SPACK_ROOT}/share/spack/setup-env.sh" ]; then
+            source "${SPACK_ROOT}/share/spack/setup-env.sh"
+          fi
+          reframe -c ./benchmarks/apps/microbench-eor -n MicrobenchEOR --keep-stage-files -r

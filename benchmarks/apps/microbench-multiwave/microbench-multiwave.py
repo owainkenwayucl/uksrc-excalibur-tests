@@ -11,6 +11,7 @@ from astropy.io import fits
 
 @rfm.simple_test
 class MicrobenchMULTIWAVE(rfm.RunOnlyRegressionTest):
+    bench_name="MicrobenchMULTIWAVE"
     valid_systems = ['*']
     valid_prog_environs = ['default']
 
