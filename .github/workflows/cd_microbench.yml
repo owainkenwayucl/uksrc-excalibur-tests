@@ -58,7 +58,7 @@ jobs:
         shell: bash
         run: |
           export APPTAINER_PATH=$(which apptainer)
-          if [ -z $SINGULARITY_PATH ]; then
+          if [ -z APPTAINER_PATH ]; then
             apt update
             apt install -y software-properties-common
             add-apt-repository -y ppa:apptainer/ppa
