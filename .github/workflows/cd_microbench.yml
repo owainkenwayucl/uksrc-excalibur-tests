@@ -17,14 +17,13 @@ jobs:
         with:
           python-version: '3.10.6'
           cache: 'pip'
+
       - name: Install Excalibur-tests
         shell: bash
         run: |
-          if ! pip list 2> /dev/null | grep -q 'excalibur-tests'; 
+          if ! pip list 2> /dev/null | grep -q 'excalibur-tests'; then
             pip install -e .[test]
             pip install pandas
-          else
-            echo ""
           fi
 
       - name: Find & Install Spack
