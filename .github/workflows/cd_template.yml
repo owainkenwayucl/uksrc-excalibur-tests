@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ ${{ fromJSON(needs.discover-runners.outputs.runner-matrix) }} ]
+        runner: ${{ fromJSON(needs.discover-runners.outputs.runner-matrix) }}
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: ./.github/actions/common-setup # This only installs the common software needed for the framework.
