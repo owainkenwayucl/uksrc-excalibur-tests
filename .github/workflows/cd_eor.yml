@@ -50,6 +50,7 @@ jobs:
         runner: ${{ fromJSON(needs.discover-runners.outputs.runner-matrix) }}
     runs-on: [self-hosted, "${{ matrix.runner }}"]
     steps:
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/common-setup
       - name: Run EoR Microbenchmark
         id: runcall
