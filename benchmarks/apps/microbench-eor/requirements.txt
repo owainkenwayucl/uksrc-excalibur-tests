@@ -9,8 +9,6 @@ matplotlib
 multiprocess
 numpy
 pandas
-pip
-python
 pyuvdata==2.4.5
 rich
 scipy==1.13
