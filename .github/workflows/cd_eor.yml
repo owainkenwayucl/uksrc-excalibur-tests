@@ -16,7 +16,7 @@ jobs:
       - name: Get Self-Hosted Runners
         id: set-matrix
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           # Query GitHub API for self-hosted runners
           RUNNERS=$(curl -s -H "Authorization: token $GH_TOKEN" \
