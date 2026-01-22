@@ -84,4 +84,4 @@ jobs:
           if [ -f "${SPACK_ROOT}/share/spack/setup-env.sh" ]; then
             source "${SPACK_ROOT}/share/spack/setup-env.sh"
           fi
-          reframe --skip-sanity-check -c ./benchmarks/apps/microbench-lofarint -n MicrobenchLOFARINT --keep-stage-files -r
+          reframe --skip-sanity-check -c ./benchmarks/apps/microbench-lofarint -n MicrobenchLOFARINT -r

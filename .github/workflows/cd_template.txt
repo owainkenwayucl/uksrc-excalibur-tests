@@ -1,3 +1,9 @@
+# This file works as a template for benchmarks being submitted to the runners hosted
+# on UKSRC hardware.
+#
+#
+#
+
 name: Template for tests to remote runnter
 run-name: ${{ github.actor }} is running.
 on:
@@ -42,6 +48,7 @@ jobs:
           echo "runner-matrix=$RUNNERS" >> $GITHUB_OUTPUT
           echo "Found runners: $RUNNERS"
 
+  # All the remaining steps are examples of how steps can be run, each one must be set up for each benchmark.
   test-run: # Name of test to run
     needs: discover-runners
     strategy:
@@ -64,4 +71,4 @@ jobs:
         id: runcall
         shell: bash
         run: |
-          echo "Run commands"
+          echo "reframe -c ./benchmarks/apps/<TEST DIR> -n <TEST NAME> -r"
