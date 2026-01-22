@@ -2,7 +2,6 @@ aipy
 astropy
 astropy-healpix
 cartopy
-git
 gitpython
 ipython
 jinja2
