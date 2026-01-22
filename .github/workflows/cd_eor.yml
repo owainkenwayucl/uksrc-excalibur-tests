@@ -52,6 +52,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/common-setup
+      - name: Install Dependencies
+        run: |
+          pip install -r ${PWD}/benchmarks/apps/microbench-ero/requirements.txt
       - name: Run EoR Microbenchmark
         id: runcall
         # Run should contain all the lines of code in order to run the test
