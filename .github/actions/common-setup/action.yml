@@ -24,7 +24,9 @@ runs:
       run: |
         export SPACK_PATH=$(which spack)
         if [ -z $SPACK_PATH ]; then
-          git clone --depth=1 --branch=releases/v1.1 https://github.com/spack/spack.git
+          if [ ! -d spack ]; then
+            git clone --depth=1 --branch=releases/v1.1 https://github.com/spack/spack.git
+          fi
           cd spack
           echo "PATH=${PWD}/bin:${PATH}" >> "${GITHUB_ENV}"
           export SPACK_PATH=$(which spack)
