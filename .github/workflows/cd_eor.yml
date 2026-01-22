@@ -11,7 +11,7 @@ jobs:
   discover-runners:
     runs-on: ubuntu-latest  # Use GitHub-hosted for discovery
     outputs:
-      runner-matrix: ${{ steps.set-matrix.outputs.matrix }}
+      runner-matrix: ${{ steps.set-matrix.outputs.runner-matrix }}
     steps:
       - name: Get Self-Hosted Runners
         id: set-matrix
@@ -48,7 +48,7 @@ jobs:
       fail-fast: false
       matrix:
         runner: ${{ needs.discover-runners.outputs.runner-matrix }}
-    runs-on: [self-hosted, ${{ matrix.runner }}]
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: ./.github/actions/common-setup
       - name: Run EoR Microbenchmark

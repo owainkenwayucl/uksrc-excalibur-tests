@@ -11,7 +11,7 @@ jobs:
   discover-runners:
     runs-on: ubuntu-latest  # Use GitHub-hosted for discovery
     outputs:
-      runner-matrix: ${{ steps.set-matrix.outputs.matrix }}
+      runner-matrix: ${{ steps.set-matrix.outputs.runner-matrix }}
     steps:
       - name: Get Self-Hosted Runners
         id: set-matrix
