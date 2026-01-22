@@ -1,5 +1,5 @@
-name: Template for tests to remote runnter
-run-name: ${{ github.actor }} is running.
+name: Deploy EoR Microbenchmark to runner
+run-name: ${{ github.actor }} is running EoR Microbenchmark.
 on:
   workflow_dispatch: {}
 #  schedule:
@@ -26,7 +26,7 @@ jobs:
           echo "matrix=$RUNNERS" >> $GITHUB_OUTPUT
           echo "Found runners: $RUNNERS"
 
-  test-run: # Name of test to run
+  run-eor:
     needs: discover-runners
     strategy:
       matrix:
@@ -34,17 +34,16 @@ jobs:
       fail-fast: false
     runs-on: [ self-hosted, ${ { matrix.runner } } ]
     steps:
-      - uses: ./.github/actions/common-setup # This only installs the common software needed for the framework.
-
-      # add installation steps needed for specific test
-      - name: Install stuff
-        shell: bash
-        run: |
-          echo "Install commands"
-
-      # add steps to run the specific test
-      - name: Run stuff
+      - uses: ./.github/actions/common-setup
+      - name: Run EoR Microbenchmark
         id: runcall
+        # Run should contain all the lines of code in order to run the test
         shell: bash
         run: |
-          echo "Run commands"
+          export RFM_CONFIG_FILES="${PWD}/benchmarks/reframe_config.py"
+          export RFM_USE_LOGIN_SHELL="true"
+          export SPACK_ROOT=$(which spack)
+          if [ -f "${SPACK_ROOT}/share/spack/setup-env.sh" ]; then
+            source "${SPACK_ROOT}/share/spack/setup-env.sh"
+          fi
+          reframe -c ./benchmarks/apps/microbench-eor -n MicrobenchEOR --keep-stage-files -r

@@ -1,0 +1,70 @@
+name: Deploy LOFARINT Microbenchmark to runner
+run-name: ${{ github.actor }} is running LOFARINT Microbenchmark.
+on:
+  workflow_dispatch: {}
+#  schedule:
+#    - cron: "0 0 * * 1"
+# "Minute Hour DayOfMonth(1-31) Month(1-12) DayOfWeek(0-6)"
+
+jobs:
+  # This searches the framework repo for all available runners and submits all workflows to them.
+  discover-runners:
+    runs-on: ubuntu-latest  # Use GitHub-hosted for discovery
+    outputs:
+      runner-matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Get Self-Hosted Runners
+        id: set-matrix
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Query GitHub API for self-hosted runners
+          RUNNERS=$(curl -s -H "Authorization: token $GH_TOKEN" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/runners" \
+            | jq -c '[.runners[] | select(.status == "online") | .labels[] | select(.name != "self-hosted") | .name] | unique')
+          
+          echo "matrix=$RUNNERS" >> $GITHUB_OUTPUT
+          echo "Found runners: $RUNNERS"
+
+  run-lofarint: # Name of test to run
+    needs: discover-runners
+    strategy:
+      matrix:
+        runner: ${{ fromJson(needs.discover-runners.outputs.runner-matrix) }}
+      fail-fast: false
+    runs-on: [ self-hosted, ${ { matrix.runner } } ]
+    steps:
+      - uses: ./.github/actions/common-setup
+      - name: Install Toil
+        shell: bash
+        run: |
+          export TOIL_PATH=$(which toil-cwl-runner)
+          if [ -z $TOIL_PATH ]; then
+            pip install toil[cwl]
+          fi
+      - name: Install Apptainer
+        shell: bash
+        run: |
+          export SINGULARITY_PATH=$(which singularity)
+          if [ -z $SINGULARITY_PATH ]; then
+            export APPTAINER_PATH=$(which apptainer)
+            if [ -z $APPTAINER_PATH ]; then
+              apt update
+              apt install -y software-properties-common
+              add-apt-repository -y ppa:apptainer/ppa
+              apt update
+              apt install -y apptainer
+            fi
+          fi
+      - name: Run LOFARINT test
+        id: runcall
+        # Run should contain all the lines of code in order to run the test
+        shell: bash
+        run: |
+          export RFM_CONFIG_FILES="${PWD}/benchmarks/reframe_config.py"
+          export RFM_USE_LOGIN_SHELL="true"
+          export SPACK_ROOT=$(which spack)
+          if [ -f "${SPACK_ROOT}/share/spack/setup-env.sh" ]; then
+            source "${SPACK_ROOT}/share/spack/setup-env.sh"
+          fi
+          reframe --skip-sanity-check -c ./benchmarks/apps/microbench-lofarint -n MicrobenchLOFARINT --keep-stage-files -r
