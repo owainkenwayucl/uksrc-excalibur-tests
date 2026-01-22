@@ -1,5 +1,5 @@
 name: 'Base Install Action'
-description:
+description: 'Run basic installation steps for the benchmarking framework.'
 runs:
   using: 'composite'
   steps:

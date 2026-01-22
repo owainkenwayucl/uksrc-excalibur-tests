@@ -29,9 +29,9 @@ jobs:
   run-lofarint: # Name of test to run
     needs: discover-runners
     strategy:
+      fail-fast: false
       matrix:
         runner: ${{ fromJson(needs.discover-runners.outputs.runner-matrix) }}
-      fail-fast: false
     runs-on: [ self-hosted, ${ { matrix.runner } } ]
     steps:
       - uses: ./.github/actions/common-setup
