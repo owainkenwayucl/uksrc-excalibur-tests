@@ -4,7 +4,7 @@ runs:
   using: 'composite'
   steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
     - name: Python Setup
       uses: actions/setup-python@v4
       with:
@@ -29,7 +29,4 @@ runs:
           fi
           cd spack
           echo "PATH=${PWD}/bin:${PATH}" >> "${GITHUB_ENV}"
-          export SPACK_PATH=$(which spack)
-          echo "spack_path=$SPACK_PATH" >> "$GITHUB_OUTPUT"
-        else
-          echo "spack_path=$SPACK_PATH" >> "$GITHUB_OUTPUT"
+        fi
