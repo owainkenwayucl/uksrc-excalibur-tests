@@ -11,44 +11,23 @@ jobs:
   discover-runners:
     runs-on: ubuntu-latest  # Use GitHub-hosted for discovery
     outputs:
-      runner-matrix: ${{ steps.set-matrix.outputs.runner-matrix }}
+      runmatrix: ${{ steps.set-matrix.outputs.runner-matrix }}
     steps:
-      - name: Get Self-Hosted Runners
-        id: set-matrix
-        env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: |
-          # Query GitHub API for self-hosted runners
-          RUNNERS=$(curl -s -H "Authorization: token $GH_TOKEN" \
-            "https://api.github.com/repos/${{ github.repository }}/actions/runners" \
-              | jq -c '
-              [
-                .runners[] 
-                | select(.status == "online") 
-                | .labels[].name
-              ] 
-              | unique 
-              | map(
-                select(
-                  . != "self-hosted" and 
-                  . != "Linux" and 
-                  . != "X64" and 
-                  . != "Windows" and 
-                  . != "macOS"
-                )
-              )'
-            )
-          
-          echo "runner-matrix=$RUNNERS" >> $GITHUB_OUTPUT
-          echo "Found runners: $RUNNERS"
+      - uses: actions/checkout@v6
+      - id: runner-retrieval
+        uses: ./.github/actions/runner-retrieval
+      - id: set-matrix
+        shell: bash
+        run: echo random-number ${{ steps.runner-retrieval.outputs.runmatrix }}
 
   run-eor:
     needs: discover-runners
     strategy:
       fail-fast: false
       matrix:
-        runner: ${{ fromJSON(needs.discover-runners.outputs.runner-matrix) }}
-    runs-on: [self-hosted, "${{ matrix.runner }}"]
+        include: ${{ fromJSON(needs.discover-runners.outputs.runmatrix) }}
+    runs-on: [self-hosted, "${{ runmatrix.runner }}"]
+    environment: PRODUCTION
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/common-setup
@@ -59,6 +38,14 @@ jobs:
         id: runcall
         # Run should contain all the lines of code in order to run the test
         shell: bash
+        env:
+          OS_APPLICATION_CREDENTIAL_ID: ${{ secrets.OS_APPLICATION_CREDENTIAL_ID }}
+          OS_APPLICATION_CREDENTIAL_SECRET: ${{ secrets.OS_APPLICATION_CREDENTIAL_SECRET }}
+          OS_AUTH_URL: ${{ secrets.OS_AUTH_URL }}
+          OS_AUTH_TYPE: ${{ vars.OS_AUTH_TYPE }}
+          OS_IDENTITY_API_VERSION: ${{ vars.OS_IDENTITY_API_VERSION }}
+          OS_INTERFACE: ${{ vars.OS_INTERFACE }}
+          OS_REGION_NAME: ${{ vars.OS_REGION_NAME }}
         run: |
           export RFM_CONFIG_FILES="${PWD}/benchmarks/reframe_config.py"
           export RFM_USE_LOGIN_SHELL="true"
@@ -66,4 +53,4 @@ jobs:
           if [ -f "${SPACK_ROOT}/share/spack/setup-env.sh" ]; then
             source "${SPACK_ROOT}/share/spack/setup-env.sh"
           fi
-          reframe --skip-sanity-check -c ./benchmarks/apps/microbench-eor -n MicrobenchEOR -r
+          reframe --skip-sanity-check --system=${{ runmatrix.reframesystem }} -c ./benchmarks/apps/microbench-eor -n MicrobenchEOR -r

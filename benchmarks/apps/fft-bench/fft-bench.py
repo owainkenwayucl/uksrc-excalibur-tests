@@ -64,6 +64,13 @@ class FfftBenmchmarkBase(SpackTest):
 
     @run_before("performance")
     def output_list_dict(self):
+        """
+        In order to use the database handler perflog 'swiftdb', self.output_dict_list must be defined.
+        This dictionary should include at least:
+        - TimeOfTest [str]
+        - SystemPartition [str]
+        - <Desired Output variables> [Format Determinable]
+        """
         pattern = r'(?P<Library>\S+), (?P<Mem_Size>\S+), (?P<Avg_time>\S+),'
         output_list = sn.extractall(pattern,
                                     pathlib.Path(self.stagedir) / self.fft_output_file,
@@ -74,11 +81,11 @@ class FfftBenmchmarkBase(SpackTest):
         for output in output_list:
             self.output_dict_list += [
                 {
-                    "Date": time_of_test,
-                    "System - Partition": f"{self.current_system.name} - {self.current_partition.name}",
+                    "TimeOfTest": time_of_test,
+                    "SystemPartition": f"{self.current_system.name} - {self.current_partition.name}",
                     "Library": output[0],
-                    "Array size [MB]": output[1],
-                    "Avg. Time [ms]":output[2]
+                    "ArraySizeMB": output[1],
+                    "AvgTimeMS":output[2]
                 }
             ]
         return

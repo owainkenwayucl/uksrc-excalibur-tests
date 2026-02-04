@@ -27,6 +27,8 @@ class MicrobenchEOR(rfm.RunOnlyRegressionTest):
 
     executable = "apptainer"
 
+    output_dict_list = []
+
     @run_before('setup')
     def build_singularity(self):
         if not os.path.isfile(os.path.join(self.eor_code_dir, "singularity_images/hera-pspec-mambaorg.sif")):
@@ -52,6 +54,7 @@ class MicrobenchEOR(rfm.RunOnlyRegressionTest):
     @run_before('run')
     def add_prerun_cmds(self):
         self.prerun_cmds = [
+            f"echo \"Workflow start: $(date '+%Y-%m-%d %H:%M:%S')\" > {self.outputdir}/output.log"
         ]
 
     @run_before('run')
@@ -65,6 +68,10 @@ class MicrobenchEOR(rfm.RunOnlyRegressionTest):
             os.path.join(self.eor_code_dir, "scripts/pspec_params_micro.yaml")
         ]
 
+    @run_after('run')
+    def post_run_cmd(self):
+        subprocess.run(f"echo \"Workflow end: $(date '+%Y-%m-%d %H:%M:%S')\" >> {self.outputdir}/output.log", shell=True)
+
     @sanity_function
     def validate(self):
         with open(os.path.join(self.stagedir, "rfm_job.out")) as myfile:
@@ -73,6 +80,45 @@ class MicrobenchEOR(rfm.RunOnlyRegressionTest):
             else:
                 return False
 
-    @run_after('sanity')
+    @run_before("performance")
+    def output_list_dict(self):
+        """
+        In order to use the database handler perflog 'swiftdb', self.output_dict_list must be defined.
+        This dictionary should include at least:
+        - TimeOfTest [str]
+        - SystemPartition [str]
+        - <Desired Output variables> [Format Determinable]
+        """
+        start_str = sn.evaluate(sn.extractsingle(
+            r'Workflow start: (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})',
+            pathlib.Path(self.outputdir) / pathlib.Path("output.log"),
+            tag=1
+        ))
+        finish_str = sn.evaluate(sn.extractsingle(
+            r'Workflow end: (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})',
+            pathlib.Path(self.outputdir) / pathlib.Path("output.log"),
+            tag=1
+        ))
+        start = dt.strptime(start_str, "%Y-%m-%d %H:%M:%S")
+        finish = dt.strptime(finish_str, "%Y-%m-%d %H:%M:%S")
+
+        elapsed_seconds = (finish - start).total_seconds()
+
+        time_of_test = str(dt.now().strftime("%Y-%m-%d-%H:%M"))
+
+        self.output_dict_list += [
+            {
+                "TimeOfTest": time_of_test,
+                "SystemPartition": f"{self.current_system.name} - {self.current_partition.name}",
+                "ExecutionTime": elapsed_seconds
+            }
+        ]
+        print(self.output_dict_list)
+
+    @performance_function('notAmetric')
+    def dont_send_confluence(self):
+        return 1
+
+    @run_after('performance')
     def free_space(self):
         subprocess.run(["rm", "-rf", os.path.join(self.outputdir, "outputs")])

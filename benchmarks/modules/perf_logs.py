@@ -1,4 +1,6 @@
 # moved from utils.py to separate the pandas dependency
+
+
 from .utils import *
 
 import pandas as pd
@@ -9,6 +11,13 @@ import uuid
 import requests
 from typing import AnyStr, Dict
 from requests.auth import HTTPBasicAuth
+
+from keystoneauth1 import session
+from keystoneauth1.identity import v3
+from swiftclient.client import Connection
+import sqlite3
+from pathlib import Path
+from dotenv import load_dotenv
 
 def read_perflog(path):
     """ Return a pandas dataframe from a ReFrame performance log.
@@ -316,3 +325,79 @@ def send_to_table(site: AnyStr, space_id: AnyStr, email: AnyStr, api_token: AnyS
         sys.exit(4)
     return
 #
+def get_database(
+        container : str,
+        db_file : str,
+        sess : session.Session,
+        os_options : dict,
+        local_db_file : str = None):
+    if local_db_file is None:
+        local_db_file = db_file
+    conn = Connection(
+        session=sess,
+        os_options=os_options
+    )
+    try:
+        _, obj_contents = conn.get_object(container, db_file)
+        with open(local_db_file, 'wb') as local_file:
+            local_file.write(obj_contents)
+    except Exception as e:
+        print(f"Unable to get Database: {e}")
+    finally:
+        conn.close()
+
+def put_database(
+        container : str,
+        db_file : str,
+        sess : session.Session,
+        os_options : dict,
+        local_db_file : str = None):
+    if local_db_file is None:
+        local_db_file = db_file
+    conn = Connection(
+        session=sess,
+        os_options=os_options
+    )
+    try:
+        with open(local_db_file, 'rb') as local_file:
+            conn.put_object(container, db_file, contents=local_file)
+    except Exception as e:
+        print(f"Unable to get Database: {e}")
+    finally:
+        conn.close()
+
+class DatabaseConnection:
+    def __init__(
+            self,
+            container: str,
+            db_file: str,
+            os_options: dict,
+    ):
+        self.container = container
+        self.db_file = db_file
+        self.os_options = os_options
+
+        self.auth = v3.ApplicationCredential(
+            auth_url=os.environ.get('OS_AUTH_URL'),
+            application_credential_id=os.environ.get('OS_APPLICATION_CREDENTIAL_ID'),
+            application_credential_secret=os.environ.get('OS_APPLICATION_CREDENTIAL_SECRET')
+        )
+        self.sess = session.Session(auth=self.auth)
+
+    def __enter__(self):
+        try:
+            get_database(container=self.container, db_file=self.db_file, sess=self.sess, os_options=self.os_options)
+        except Exception as e:
+            print(f"Error getting database: {e}")
+            print(f"Treating {self.db_file} as new database on {self.container}")
+        self.con = sqlite3.connect(self.db_file)
+        self.cur = self.con.cursor()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.con.commit()
+        self.con.close()
+        try:
+            put_database(container=self.container, db_file=self.db_file, sess=self.sess, os_options=self.os_options)
+        except Exception as e:
+            print(f"Error putting database: {e}")

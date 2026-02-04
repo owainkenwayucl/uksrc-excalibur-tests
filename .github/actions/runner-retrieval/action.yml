@@ -33,21 +33,5 @@ runs:
               )
             ]
           ')
-#            [
-#              .runners[]
-#              | select(.status == "online")
-#              | .labels[].name
-#            ]
-#            | unique
-#            | map(
-#              select(
-#                . != "self-hosted" and
-#                . != "Linux" and
-#                . != "X64" and
-#                . != "Windows" and
-#                . != "macOS"
-#              )
-#            )'
-#          )
         echo "runner-matrix=$RUNNERS" >> $GITHUB_OUTPUT
         echo "Found runners with metadata: $RUNNERS"
