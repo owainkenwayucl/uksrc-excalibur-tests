@@ -904,13 +904,13 @@ site_configuration = {
 #                    'extras': {'facility': 'reframe'},
 #                    'ignore_keys': [],
 #                },
-#                {
-#                    'type': 'swiftdb',
-#                    'level': 'info',
-#                    'debug': False,
-#                    'extras': {'facility': 'reframe'},
-#                    'ignore_keys': [],
-#                }
+                {
+                    'type': 'swiftdb',
+                    'level': 'info',
+                    'debug': False,
+                    'extras': {'facility': 'reframe'},
+                    'ignore_keys': [],
+                }
             ]
         }
     ],
