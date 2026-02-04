@@ -3,7 +3,7 @@ description: 'Retrieves the matrix of runners to use, as well as the reframe sys
 outputs:
   runner_matrix:
     description: "JSON of the runner matrix to be used by the deployment."
-    value: ${{ steps.set-matrix.outputs.runner-matrix }}
+    value: ${{ steps.set-matrix.outputs.runner_matrix }}
 runs:
   using: 'composite'
   steps:
@@ -16,6 +16,9 @@ runs:
         GH_TOKEN: ${{ secrets.PAT_TOKEN }}
       run: |
         # Query GitHub API for self-hosted runners
+        echo "=================================="
+        echo $(curl -s -H "Authorization: token $GH_TOKEN" "https://api.github.com/repos/${{ github.repository }}/actions/runners")
+        echo "=================================="
         RUNNERS=$(curl -s -H "Authorization: token $GH_TOKEN" \
           "https://api.github.com/repos/${{ github.repository }}/actions/runners" \
             | jq -c '
@@ -33,5 +36,5 @@ runs:
               )
             ]
           ')
-        echo "runner-matrix=$RUNNERS" >> $GITHUB_OUTPUT
+        echo "runner_matrix=$RUNNERS" >> $GITHUB_OUTPUT
         echo "Found runners with metadata: $RUNNERS"

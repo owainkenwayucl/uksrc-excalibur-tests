@@ -11,21 +11,18 @@ jobs:
   discover-runners:
     runs-on: ubuntu-latest  # Use GitHub-hosted for discovery
     outputs:
-      runmatrix: ${{ steps.set-matrix.outputs.runner-matrix }}
+      matrix: ${{ steps.set-matrix.outputs.runner_matrix }}
     steps:
       - uses: actions/checkout@v6
       - id: runner-retrieval
         uses: ./.github/actions/runner-retrieval
-      - id: set-matrix
-        shell: bash
-        run: echo random-number ${{ steps.runner-retrieval.outputs.runmatrix }}
 
   run-eor:
     needs: discover-runners
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(needs.discover-runners.outputs.runmatrix) }}
+        include: ${{ fromJSON(needs.discover-runners.outputs.matrix) }}
     runs-on: [self-hosted, "${{ matrix.runner }}"]
     environment: production
     steps:
