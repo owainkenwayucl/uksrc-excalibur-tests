@@ -42,4 +42,3 @@ runs:
           ')
         echo "runner_matrix=$RUNNERS" >> $GITHUB_OUTPUT
         echo "Found runners with metadata: $RUNNERS"
-        echo matrix=[self-hosted, "${{ fromJSON(needs.discover-runners.outputs.matrix) }}"]
