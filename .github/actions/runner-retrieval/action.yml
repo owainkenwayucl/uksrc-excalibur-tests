@@ -5,9 +5,9 @@ inputs:
     description: 'GitHub token with repo access'
     required: true
 outputs:
-  runner_matrix:
+  matrix:
     description: "JSON of the runner matrix to be used by the deployment."
-    value: ${{ steps.set-matrix.outputs.runner_matrix }}
+    value: ${{ steps.set-matrix.outputs.matrix }}
 runs:
   using: 'composite'
   steps:
@@ -40,5 +40,5 @@ runs:
               )
             ]
           ')
-        echo "runner_matrix=$RUNNERS" >> $GITHUB_OUTPUT
+        echo "matrix=$RUNNERS" >> $GITHUB_OUTPUT
         echo "Found runners with metadata: $RUNNERS"
