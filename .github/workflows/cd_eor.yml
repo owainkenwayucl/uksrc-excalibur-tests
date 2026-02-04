@@ -27,7 +27,7 @@ jobs:
       matrix:
         include: ${{ fromJSON(needs.discover-runners.outputs.runmatrix) }}
     runs-on: [self-hosted, "${{ matrix.runner }}"]
-    environment: PRODUCTION
+    environment: production
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/common-setup
@@ -53,4 +53,4 @@ jobs:
           if [ -f "${SPACK_ROOT}/share/spack/setup-env.sh" ]; then
             source "${SPACK_ROOT}/share/spack/setup-env.sh"
           fi
-          reframe --skip-sanity-check --system=${{ runmatrix.reframesystem }} -c ./benchmarks/apps/microbench-eor -n MicrobenchEOR -r
+          reframe --skip-sanity-check --system=${{ matrix.reframesystem }} -c ./benchmarks/apps/microbench-eor -n MicrobenchEOR -r
