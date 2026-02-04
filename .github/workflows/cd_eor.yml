@@ -11,7 +11,7 @@ jobs:
   discover-runners:
     runs-on: ubuntu-latest  # Use GitHub-hosted for discovery
     outputs:
-      matrix: ${{ steps.set-matrix.outputs.runner_matrix }}
+      runner_matrix: ${{ steps.set-matrix.outputs.runner_matrix }}
     steps:
       - uses: actions/checkout@v6
       - id: runner-retrieval
@@ -24,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(needs.discover-runners.outputs.matrix) }}
+        include: ${{ fromJSON(needs.discover-runners.outputs.runner_matrix) }}
     runs-on: [self-hosted, "${{ matrix.runner }}"]
     environment: production
     steps:
