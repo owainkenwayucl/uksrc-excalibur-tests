@@ -17,6 +17,9 @@ runs:
           pip install -e .[test]
           pip install pandas
         fi
+        if ! pip list 2> /dev/null | grep -q 'keystoneauth1'; then
+          pip install keystoneauth1
+        fi
     - name: Find & Install Spack
       id: fspack
       working-directory: ${{runner.workspace}}

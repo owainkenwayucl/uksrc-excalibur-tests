@@ -17,15 +17,13 @@ jobs:
   discover-runners:
     runs-on: ubuntu-latest  # Use GitHub-hosted for discovery
     outputs:
-      runner-matrix: ${{ steps.set-matrix.outputs.runner-matrix }}
-
+      matrix: ${{ steps.runner-retrieval.outputs.matrix }}
     steps:
       - uses: actions/checkout@v6
       - id: runner-retrieval
         uses: ./.github/actions/runner-retrieval
-      - id: set-matrix
-        shell: bash
-        run: echo random-number ${{ steps.runner-retrieval.outputs.runner-matrix }}
+        with:
+          github-token: ${{ secrets.PAT_TOKEN }}
 
   # All the remaining steps are examples of how steps can be run, each one must be set up for each benchmark.
   test-run: # Name of test to run
@@ -33,8 +31,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: ${{ fromJSON(needs.discover-runners.outputs.runner-matrix) }}
+        include: ${{ fromJSON(needs.discover-runners.outputs.matrix) }}
     runs-on: [self-hosted, "${{ matrix.runner }}"]
+    environment: production
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/common-setup # This only installs the common software needed for the framework.

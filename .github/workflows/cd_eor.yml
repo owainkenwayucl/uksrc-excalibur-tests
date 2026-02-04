@@ -19,17 +19,6 @@ jobs:
         with:
           github-token: ${{ secrets.PAT_TOKEN }}
 
-  debug-runners:
-    runs-on: ubuntu-latest
-    needs: discover-runners
-    steps:
-      - name: Show matrix output
-        run: |
-          echo "Matrix output:"
-          echo '${{ needs.discover-runners.outputs.matrix }}'
-          echo "Parsed with jq:"
-          echo '${{ needs.discover-runners.outputs.matrix }}' | jq .   
-
   run-eor:
     needs: discover-runners
     strategy:
