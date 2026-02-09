@@ -61,4 +61,4 @@ jobs:
           if [ -f "${SPACK_ROOT}/share/spack/setup-env.sh" ]; then
             source "${SPACK_ROOT}/share/spack/setup-env.sh"
           fi
-          reframe -c ./benchmarks/apps/microbench-lofarint -r
+          reframe --system=${{ matrix.reframesystem }} -c ./benchmarks/apps/microbench-lofarint -r
