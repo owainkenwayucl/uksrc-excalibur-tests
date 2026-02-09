@@ -1,5 +1,5 @@
-name: Deploy LOFARINT Microbenchmark to runner
-run-name: ${{ github.actor }} is running LOFARINT Microbenchmark.
+name: Deploy MULTIWAVE Microbenchmark to runner
+run-name: ${{ github.actor }} is running.
 on:
   workflow_dispatch: {}
 #  schedule:
@@ -19,7 +19,8 @@ jobs:
         with:
           github-token: ${{ secrets.PAT_TOKEN }}
 
-  run-lofarint: # Name of test to run
+  # All the remaining steps are examples of how steps can be run, each one must be set up for each benchmark.
+  test-run: # Name of test to run
     needs: discover-runners
     strategy:
       fail-fast: false
@@ -29,31 +30,17 @@ jobs:
     environment: production
     steps:
       - uses: actions/checkout@v6
-      - uses: ./.github/actions/common-setup
-      - name: Install Toil
-        shell: bash
-        run: |
-          export TOIL_PATH=$(which toil-cwl-runner)
-          if [ -z $TOIL_PATH ]; then
-            pip install toil[cwl]
-          fi
-      - name: Install Apptainer
-        shell: bash
-        run: |
-          export SINGULARITY_PATH=$(which singularity)
-          if [ -z $SINGULARITY_PATH ]; then
-            export APPTAINER_PATH=$(which apptainer)
-            if [ -z $APPTAINER_PATH ]; then
-              apt update
-              apt install -y software-properties-common
-              add-apt-repository -y ppa:apptainer/ppa
-              apt update
-              apt install -y apptainer
-            fi
-          fi
-      - name: Run LOFARINT test
+      - uses: ./.github/actions/common-setup # This only installs the common software needed for the framework.
+
+      # add installation steps needed for specific test
+#      - name: Install stuff
+#        shell: bash
+#        run: |
+#          echo "Install commands"
+
+      # add steps to run the specific test
+      - name: Run stuff
         id: runcall
-        # Run should contain all the lines of code in order to run the test
         shell: bash
         run: |
           export RFM_CONFIG_FILES="${PWD}/benchmarks/reframe_config.py"
@@ -62,4 +49,4 @@ jobs:
           if [ -f "${SPACK_ROOT}/share/spack/setup-env.sh" ]; then
             source "${SPACK_ROOT}/share/spack/setup-env.sh"
           fi
-          reframe -c ./benchmarks/apps/microbench-lofarint -r
+          reframe -c ./benchmarks/apps/microbench-multiwave -r

@@ -39,14 +39,20 @@ jobs:
       - uses: ./.github/actions/common-setup # This only installs the common software needed for the framework.
 
       # add installation steps needed for specific test
-      - name: Install stuff
-        shell: bash
-        run: |
-          echo "Install commands"
+#      - name: Install stuff
+#        shell: bash
+#        run: |
+#          echo "Install commands"
 
       # add steps to run the specific test
       - name: Run stuff
         id: runcall
         shell: bash
         run: |
-          echo "reframe -c ./benchmarks/apps/<TEST DIR> -n <TEST NAME> -r"
+          export RFM_CONFIG_FILES="${PWD}/benchmarks/reframe_config.py"
+          export RFM_USE_LOGIN_SHELL="true"
+          export SPACK_ROOT=$(which spack)
+          if [ -f "${SPACK_ROOT}/share/spack/setup-env.sh" ]; then
+            source "${SPACK_ROOT}/share/spack/setup-env.sh"
+          fi
+          reframe -c ./benchmarks/apps/<TEST DIR> -n <TEST NAME> -r

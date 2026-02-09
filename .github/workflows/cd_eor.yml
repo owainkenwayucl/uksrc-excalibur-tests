@@ -52,4 +52,4 @@ jobs:
           if [ -f "${SPACK_ROOT}/share/spack/setup-env.sh" ]; then
             source "${SPACK_ROOT}/share/spack/setup-env.sh"
           fi
-          reframe --skip-sanity-check --system=${{ matrix.reframesystem }} -c ./benchmarks/apps/microbench-eor -n MicrobenchEOR -r
+          reframe --skip-sanity-check --system=${{ matrix.reframesystem }} -c ./benchmarks/apps/microbench-eor -r
