@@ -23,6 +23,9 @@ runs:
         if ! pip list 2> /dev/null | grep -q 'python-swiftclient'; then
           pip install python-swiftclient
         fi
+        if ! pip list 2> /dev/null | grep -q 'dotenv'; then
+          pip install dotenv
+        fi
     - name: Find & Install Spack
       id: fspack
       working-directory: ${{runner.workspace}}
