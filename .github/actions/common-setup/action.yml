@@ -20,8 +20,8 @@ runs:
         if ! pip list 2> /dev/null | grep -q 'keystoneauth1'; then
           pip install keystoneauth1
         fi
-        if ! pip list 2> /dev/null | grep -q 'swiftclient'; then
-          pip install swiftclient
+        if ! pip list 2> /dev/null | grep -q 'python-swiftclient'; then
+          pip install python-swiftclient
         fi
     - name: Find & Install Spack
       id: fspack
