@@ -53,7 +53,6 @@ jobs:
           fi
       - name: Run LOFARINT test
         id: runcall
-        # Run should contain all the lines of code in order to run the test
         shell: bash
         run: |
           export RFM_CONFIG_FILES="${PWD}/benchmarks/reframe_config.py"

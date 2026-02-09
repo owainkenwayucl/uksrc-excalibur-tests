@@ -30,16 +30,8 @@ jobs:
     environment: production
     steps:
       - uses: actions/checkout@v6
-      - uses: ./.github/actions/common-setup # This only installs the common software needed for the framework.
-
-      # add installation steps needed for specific test
-#      - name: Install stuff
-#        shell: bash
-#        run: |
-#          echo "Install commands"
-
-      # add steps to run the specific test
-      - name: Run stuff
+      - uses: ./.github/actions/common-setup
+      - name: Run MULTIWAVE test
         id: runcall
         shell: bash
         run: |
