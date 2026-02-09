@@ -223,7 +223,7 @@ class MicrobenchLOFARINT(rfm.RunOnlyRegressionTest):
         self.output_dict_list += [
             {
                 "TimeOfTest": time_of_test,
-                "SystemPartition": f"{self.current_system.name} - {self.current_partition.name}",
+                "SystemPartition": f"{os.environ.get('GH_RUNNER')} - {self.current_system.name} - {self.current_partition.name}",
                 "ExecutionTime": elapsed_seconds
             }
         ]

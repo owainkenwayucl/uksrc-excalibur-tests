@@ -52,6 +52,7 @@ jobs:
           export RFM_CONFIG_FILES="${PWD}/benchmarks/reframe_config.py"
           export RFM_USE_LOGIN_SHELL="true"
           export SPACK_ROOT=$(which spack)
+          export GH_RUNNER=${{ matrix.runner }}
           if [ -f "${SPACK_ROOT}/share/spack/setup-env.sh" ]; then
             source "${SPACK_ROOT}/share/spack/setup-env.sh"
           fi

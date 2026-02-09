@@ -82,7 +82,7 @@ class FfftBenmchmarkBase(SpackTest):
             self.output_dict_list += [
                 {
                     "TimeOfTest": time_of_test,
-                    "SystemPartition": f"{self.current_system.name} - {self.current_partition.name}",
+                    "SystemPartition": f"{os.environ.get('GH_RUNNER')} - {self.current_system.name} - {self.current_partition.name}",
                     "Library": output[0],
                     "ArraySizeMB": output[1],
                     "AvgTimeMS":output[2]
