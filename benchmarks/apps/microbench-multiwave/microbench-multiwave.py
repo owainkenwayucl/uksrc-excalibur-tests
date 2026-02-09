@@ -115,7 +115,7 @@ class MicrobenchMULTIWAVE(rfm.RunOnlyRegressionTest):
 
         elapsed_seconds = (finish - start).total_seconds()
 
-        time_of_test = str(dt.now().strftime("%Y-%m-%d-%H:%M"))
+        time_of_test = str(dt.now().strftime("%Y-%m-%d %H:%M:%S"))
 
         self.output_dict_list += [
             {
