@@ -1,0 +1,13 @@
+name: Run UKSRC Microbenchmarks
+run-name: ${{ github.actor }} is running all microbenchmarks
+on:
+  workflow_dispatch: {}
+
+jobs:
+  call-lofarint:
+    uses: ./.github/workflows/cd_lofarint.yml
+  call-eor:
+    uses: ./.github/workflows/cd_eor.yml
+  call-multiwave:
+    uses: ./.github/workflows/cd_multiwave.yml
+
