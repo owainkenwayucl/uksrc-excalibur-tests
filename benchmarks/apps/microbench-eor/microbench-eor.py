@@ -115,4 +115,9 @@ class MicrobenchEOR(rfm.RunOnlyRegressionTest):
 
     @run_after('performance')
     def free_space(self):
-        subprocess.run(f"rm -rf {os.path.join(self.outputdir, 'outputs')}", shell=True)
+        og_dir = os.getcwd()
+        os.chdir(os.path.join(self.eor_code_dir, "singularity_images"))
+        subprocess.run(f"rm -f hera-pspec-mambaorg.sif")
+        subprocess.run(f"rm -f {os.path.join(self.eor_data_dir, 'NF_HERA_Dipole_power_beam_healpix.fits')}")
+        os.chdir(og_dir)
+        subprocess.run(f"rm -rf {self.outputdir}", shell=True)
