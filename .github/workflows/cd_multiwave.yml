@@ -1,7 +1,8 @@
 name: Deploy MULTIWAVE Microbenchmark to runner
 run-name: ${{ github.actor }} is running.
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+  workflow_call:
 #  schedule:
 #    - cron: "0 0 * * 1"
 # "Minute Hour DayOfMonth(1-31) Month(1-12) DayOfWeek(0-6)"
