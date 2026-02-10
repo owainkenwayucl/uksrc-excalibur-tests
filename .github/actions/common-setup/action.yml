@@ -11,6 +11,7 @@ runs:
       run: |
         if command -v python3 &>/dev/null && python3 --version 2>&1 | grep -qP "3\.([1-9]\d+)\."; then
           echo "skip=true" >> $GITHUB_OUTPUT
+          pip install --upgrade pip
           echo $( python3 --version | grep -P "3\.([1-9]\d+)" )
         else
           echo "skip=false" >> $GITHUB_OUTPUT
