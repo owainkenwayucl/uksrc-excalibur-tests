@@ -12,7 +12,6 @@ runs:
         if command -v python3 &>/dev/null && python3 --version 2>&1 | grep -qP "3\.([1-9]\d+)\."; then
           echo "skip=true" >> $GITHUB_OUTPUT
           python3 -m pip install --upgrade pip
-          echo $( python3 --version | grep -P "3\.([1-9]\d+)" )
         else
           echo "skip=false" >> $GITHUB_OUTPUT
         fi
@@ -27,7 +26,12 @@ runs:
       run: |
         if ! pip list 2> /dev/null | grep -q 'excalibur-tests'; then
           pip install -e .[test]
+        fi
+        if ! pip list 2> /dev/null | grep -q 'pandas'; then
           pip install pandas
+        fi
+        if ! pip list 2> /dev/null | grep -q 'ReFrame'; then
+          pip install reframe-hpc
         fi
         if ! pip list 2> /dev/null | grep -q 'keystoneauth1'; then
           pip install keystoneauth1
