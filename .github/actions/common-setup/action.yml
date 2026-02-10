@@ -9,7 +9,7 @@ runs:
       id: check-python
       shell: bash
       run: |
-        if command -v python3 &>/dev/null && python3 --version 2>&1 | grep -q "3.10.6"; then
+        if command -v python3 &>/dev/null && python3 --version 2>&1 | grep -q "Python"; then
           echo "skip=true" >> $GITHUB_OUTPUT
         else
           echo "skip=false" >> $GITHUB_OUTPUT
