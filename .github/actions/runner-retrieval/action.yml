@@ -20,9 +20,6 @@ runs:
         GH_TOKEN: ${{ inputs.github-token }}
       run: |
         # Query GitHub API for self-hosted runners
-        echo "=================================="
-        echo $(curl -s -H "Authorization: token ${GH_TOKEN}" "https://api.github.com/repos/${{ github.repository }}/actions/runners")
-        echo "=================================="
         RUNNERS=$(curl -s -H "Authorization: token $GH_TOKEN" \
           "https://api.github.com/repos/${{ github.repository }}/actions/runners" \
             | jq -c '
