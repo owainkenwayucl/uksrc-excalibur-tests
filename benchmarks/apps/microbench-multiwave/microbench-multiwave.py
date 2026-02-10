@@ -31,27 +31,19 @@ class MicrobenchMULTIWAVE(rfm.RunOnlyRegressionTest):
     def download_code(self):
         if not os.path.isfile(os.path.join(self.multiwave_code_dir, "singularity_images/pybdsf.sif")):
             subprocess.run(
-                [
-                    "git",
-                    "clone",
-                    "https://github.com/uksrc-developers/MW-sourcefind.git",
-                    self.multiwave_code_dir
-                ]
-            )
-            subprocess.run(["mkdir", os.path.join(self.multiwave_code_dir, "singularity_images")])
+                f"git clone https://github.com/uksrc-developers/MW-sourcefind.git {self.multiwave_code_dir}",
+                shell=True)
             subprocess.run(
-                [
-                    "mv",
-                    os.path.join(self.multiwave_code_dir, "pybdsf.singularity"),
-                    os.path.join(self.multiwave_code_dir, "singularity_images/pybdsf.singularity")
-                ]
+                f"mkdir {os.path.join(self.multiwave_code_dir, 'singularity_images')}",
+                shell=True
             )
             subprocess.run(
-                ["singularity",
-                 "build",
-                 os.path.join(self.multiwave_code_dir, "singularity_images/pybdsf.sif"),
-                 os.path.join(self.multiwave_code_dir, "singularity_images/pybdsf.singularity")
-                 ]
+                    f"mv {os.path.join(self.multiwave_code_dir, 'pybdsf.singularity')} {os.path.join(self.multiwave_code_dir, 'singularity_images/pybdsf.singularity')}",
+                shell=True
+            )
+            subprocess.run(
+                f"singularity build {os.path.join(self.multiwave_code_dir, 'singularity_images/pybdsf.sif')} {os.path.join(self.multiwave_code_dir, 'singularity_images/pybdsf.singularity')}",
+                shell=True
             )
 
     @run_before('setup')
@@ -60,7 +52,7 @@ class MicrobenchMULTIWAVE(rfm.RunOnlyRegressionTest):
         if not os.path.isfile(data_set):
             file = f"https://lofar-surveys.org/public/DR2/mosaics/P000+23/low-mosaic-blanked.fits"
             file_name = data_set
-            subprocess.run(["wget", "-O", file_name, file])
+            subprocess.run(f"wget -O {file_name} {file}", shell=True)
 
     @run_before('run')
     def add_prerun_cmds(self):
@@ -132,5 +124,5 @@ class MicrobenchMULTIWAVE(rfm.RunOnlyRegressionTest):
 
     @run_after('performance')
     def free_space(self):
-        subprocess.run(["rm", "-rf", os.path.join(self.outputdir, "intermediate-products")])
+        subprocess.run(f"rm -rf {os.path.join(self.outputdir, 'intermediate-products')}", shell=True)
         subprocess.run(f"rm {self.outputdir}/*.fits", shell=True, check=True)

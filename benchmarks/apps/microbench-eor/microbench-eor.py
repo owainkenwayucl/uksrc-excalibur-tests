@@ -34,13 +34,7 @@ class MicrobenchEOR(rfm.RunOnlyRegressionTest):
         if not os.path.isfile(os.path.join(self.eor_code_dir, "singularity_images/hera-pspec-mambaorg.sif")):
             og_dir = os.getcwd()
             os.chdir(os.path.join(self.eor_code_dir, "singularity_images"))
-            subprocess.run(
-                ["singularity",
-                 "build",
-                 "hera-pspec-mambaorg.sif",
-                 "hera-pspec-mambaorg.def"
-                 ]
-            )
+            subprocess.run(f"singularity build hera-pspec-mambaorg.sif hera-pspec-mambaorg.def", shell=True)
             os.chdir(og_dir)
 
     @run_before('setup')
@@ -49,7 +43,7 @@ class MicrobenchEOR(rfm.RunOnlyRegressionTest):
         if not os.path.isfile(data_set):
             file = f"https://object.arcus.openstack.hpc.cam.ac.uk/swift/v1/AUTH_7ac3c0a502cd46c783b2128116165566/microbench_data/EoR/NF_HERA_Dipole_power_beam_healpix.fits"
             file_name = data_set
-            subprocess.run(["wget", "-O", file_name, file])
+            subprocess.run(f"wget -O {file_name} {file}", shell=True)
 
     @run_before('run')
     def add_prerun_cmds(self):
@@ -121,4 +115,4 @@ class MicrobenchEOR(rfm.RunOnlyRegressionTest):
 
     @run_after('performance')
     def free_space(self):
-        subprocess.run(["rm", "-rf", os.path.join(self.outputdir, "outputs")])
+        subprocess.run(f"rm -rf {os.path.join(self.outputdir, 'outputs')}", shell=True)

@@ -9,13 +9,19 @@ run-name: ${{ github.actor }} is running.
 on:
   workflow_dispatch:
   workflow_call:
+    inputs:
+      runner-matrix:
+        description: 'Pre-computed runner matrix JSON'
+        required: false
+        type: string
 #  schedule:
 #    - cron: "0 0 * * 1"
-# "Minute Hour DayOfMonth(1-31) Month(1-12) DayOfWeek(0-6)"
+# "Minute Hour DayOfMonth(1-31) Month(1-12) DayOfWeek(0-6, Sun - Sat)"
 
 jobs:
   # This searches the framework repo for all available runners and submits all workflows to them.
   discover-runners:
+    if: ${{ inputs.runner-matrix == '' || inputs.runner-matrix == null }}
     runs-on: ubuntu-latest  # Use GitHub-hosted for discovery
     outputs:
       matrix: ${{ steps.runner-retrieval.outputs.matrix }}
@@ -27,13 +33,14 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
 
   # All the remaining steps are examples of how steps can be run, each one must be set up for each benchmark.
-  test-run: # Name of test to run
+  run-test: # Name of test to run
     needs: discover-runners
+    if: ${{ !cancelled() }}
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(needs.discover-runners.outputs.matrix) }}
-    runs-on: [self-hosted, "${{ matrix.runner }}"]
+        include: ${{ fromJSON(inputs.runner-matrix || needs.discover-runners.outputs.matrix) }}
+    runs-on: [ self-hosted, "${{ matrix.runner }}" ]
     environment: production
     steps:
       - uses: actions/checkout@v6

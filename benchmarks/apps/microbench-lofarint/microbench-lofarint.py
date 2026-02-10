@@ -40,36 +40,36 @@ class MicrobenchLOFARINT(rfm.RunOnlyRegressionTest):
     @run_before('setup')
     def download_linc(self):
         if not os.path.exists(self.LINC_dir):
-            subprocess.call(["git", "clone", "https://git.astron.nl/RD/LINC.git", "--branch", "releases/v5.1", self.LINC_dir])
+            subprocess.run(f"git clone https://git.astron.nl/RD/LINC.git --branch releases/v5.1 {self.LINC_dir}", shell=True)
 
     @run_before('setup')
     def download_vlbi(self):
         if not os.path.exists(self.VLBI_dir):
-            subprocess.call(["git", "clone", "https://git.astron.nl/RD/VLBI-cwl.git", self.VLBI_dir]) #, "--branch", "0.8.0", self.VLBI_dir])
+            subprocess.run(f"git clone https://git.astron.nl/RD/VLBI-cwl.git {self.VLBI_dir}", shell=True) #, "--branch", "0.8.0", self.VLBI_dir])
 
     @run_before('setup')
     def download_singularity_image(self):
         vlbi_singularity_sif = os.path.join(self.vlbi_singularity_dir, "flocs_v6.0.0_sandybridge_sandybridge.sif")
         if not os.path.isfile(vlbi_singularity_sif):
-            subprocess.call(["wget", "-O", vlbi_singularity_sif, "https://public.spider.surfsara.nl/project/lofarvwf/fsweijen/containers/flocs_v6.0.0_sandybridge_sandybridge.sif"])
+            subprocess.run(f"wget -q -O {vlbi_singularity_sif} https://public.spider.surfsara.nl/project/lofarvwf/fsweijen/containers/flocs_v6.0.0_sandybridge_sandybridge.sif", shell=True)
 
         vlbi_singularity_link = os.path.join(self.vlbi_singularity_dir, "vlbi-cwl.sif")
         if not os.path.isfile(vlbi_singularity_link):
-            subprocess.call(["ln", "-s", vlbi_singularity_sif, vlbi_singularity_link])
+            subprocess.run(f"ln -s {vlbi_singularity_sif} {vlbi_singularity_link}", shell=True)
 
         vlbi_singularity_latest_link = os.path.join(self.vlbi_singularity_dir, "vlbi-cwl_latest.sif")
         if not os.path.isfile(vlbi_singularity_latest_link):
-            subprocess.call(["ln", "-s", vlbi_singularity_sif, vlbi_singularity_latest_link])
+            subprocess.run(f"ln -s {vlbi_singularity_sif} {vlbi_singularity_latest_link}", shell=True)
 
         vlbi_singularity_latest_link_colon = os.path.join(self.vlbi_singularity_dir, "vlbi-cwl:latest.sif")
         if not os.path.isfile(vlbi_singularity_latest_link_colon):
-            subprocess.call(["ln", "-s", vlbi_singularity_sif, vlbi_singularity_latest_link_colon])
+            subprocess.run(f"ln -s {vlbi_singularity_sif} {vlbi_singularity_latest_link_colon}", shell=True)
 
     @run_before('setup')
     def download_data(self):
         if not os.path.isdir(os.path.join(self.lofarint_data_dir, "L693725_SB282_uv.MS")):
             Address = "https://object.arcus.openstack.hpc.cam.ac.uk/swift/v1/AUTH_7ac3c0a502cd46c783b2128116165566/microbench_data/"
-            subprocess.call("wget -qO- {Address} | grep '^LOFARINT/' | xargs -n1 -I".format(Address=Address)+"{} wget -nH --cut-dirs=5 -R 'index.html' -x -P "+"{DataDir} {Address}".format(Address=Address, DataDir=self.lofarint_data_dir)+"{}", shell=True)
+            subprocess.run("wget -qO- {Address} | grep '^LOFARINT/' | xargs -n1 -I".format(Address=Address)+"{} wget -nH --cut-dirs=5 -R 'index.html' -x -P "+"{DataDir} {Address}".format(Address=Address, DataDir=self.lofarint_data_dir)+"{}", shell=True)
             og_dir = os.getcwd()
             os.chdir(os.path.join(self.lofarint_data_dir, "L693725_SB282_uv.MS"))
             subprocess.run("cat table.f3.tar.gz.* | tar xzvf -", shell=True)
@@ -235,5 +235,5 @@ class MicrobenchLOFARINT(rfm.RunOnlyRegressionTest):
 
     @run_after('performance')
     def free_space(self):
-        subprocess.run(["rm", "-rf", os.path.join(self.outputdir, "setup_results/")])
-        subprocess.run(["rm", "-rf", os.path.join(self.outputdir, "toil/")])
+        subprocess.run(f"rm -rf {os.path.join(self.outputdir, 'setup_results/')}", shell=True)
+        subprocess.run(f"rm -rf {os.path.join(self.outputdir, 'toil/')}", shell=True)
