@@ -6,8 +6,11 @@ on:
 jobs:
   call-lofarint:
     uses: ./.github/workflows/cd_micro_lofarint.yml
+    secrets: inherit
   call-eor:
     uses: ./.github/workflows/cd_micro_eor.yml
+    secrets: inherit
   call-multiwave:
     uses: ./.github/workflows/cd_micro_multiwave.yml
+    secrets: inherit
 
