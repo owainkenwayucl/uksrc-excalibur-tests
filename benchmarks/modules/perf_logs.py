@@ -372,10 +372,12 @@ class DatabaseConnection:
             container: str,
             db_file: str,
             os_options: dict,
+            read_only: bool = False
     ):
         self.container = container
         self.db_file = db_file
         self.os_options = os_options
+        self.read_only = read_only
 
         self.auth = v3.ApplicationCredential(
             auth_url=os.environ.get('OS_AUTH_URL'),
@@ -397,7 +399,9 @@ class DatabaseConnection:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.con.commit()
         self.con.close()
-        try:
-            put_database(container=self.container, db_file=self.db_file, sess=self.sess, os_options=self.os_options)
-        except Exception as e:
-            print(f"Error putting database: {e}")
+        if not self.read_only:
+            try:
+                put_database(container=self.container, db_file=self.db_file, sess=self.sess, os_options=self.os_options)
+            except Exception as e:
+                print(f"Error putting database: {e}")
+        subprocess.run(f"rm -f {self.db_file}")
