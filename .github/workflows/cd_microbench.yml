@@ -5,9 +5,9 @@ on:
 
 jobs:
   call-lofarint:
-    uses: ./.github/workflows/cd_lofarint.yml
+    uses: ./.github/workflows/cd_micro_lofarint.yml
   call-eor:
-    uses: ./.github/workflows/cd_eor.yml
+    uses: ./.github/workflows/cd_micro_eor.yml
   call-multiwave:
-    uses: ./.github/workflows/cd_multiwave.yml
+    uses: ./.github/workflows/cd_micro_multiwave.yml
 
