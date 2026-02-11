@@ -130,4 +130,4 @@ class MicrobenchMULTIWAVE(rfm.RunOnlyRegressionTest):
         subprocess.run(f"rm -rf ./MULTIWAVE_Data", shell=True)
         os.chdir(og_dir)
         subprocess.run(f"rm -rf {os.path.join(self.outputdir, 'intermediate-products')}", shell=True)
-        subprocess.run(f"rm {self.outputdir}/*.fits", shell=True, check=True)
+        subprocess.run(f"rm -f {self.outputdir}/*.fits", shell=True, check=True)
