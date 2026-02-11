@@ -126,8 +126,8 @@ class MicrobenchMULTIWAVE(rfm.RunOnlyRegressionTest):
     def free_space(self):
         og_dir = os.getcwd()
         os.chdir(os.path.dirname(os.path.abspath(self.__file__)))
-        subprocess.run(f"rm -rf ./MULTIWAVE_Code")
-        subprocess.run(f"rm -rf ./MULTIWAVE_Data")
+        subprocess.run(f"rm -rf ./MULTIWAVE_Code", shell=True)
+        subprocess.run(f"rm -rf ./MULTIWAVE_Data", shell=True)
         os.chdir(og_dir)
         subprocess.run(f"rm -rf {os.path.join(self.outputdir, 'intermediate-products')}", shell=True)
         subprocess.run(f"rm {self.outputdir}/*.fits", shell=True, check=True)

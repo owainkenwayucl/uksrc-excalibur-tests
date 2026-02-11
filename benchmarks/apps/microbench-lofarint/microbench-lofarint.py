@@ -237,8 +237,8 @@ class MicrobenchLOFARINT(rfm.RunOnlyRegressionTest):
     def free_space(self):
         og_dir = os.getcwd()
         os.chdir(os.path.dirname(os.path.abspath(self.__file__)))
-        subprocess.run(f"rm -rf ./LOFARINT_Code")
-        subprocess.run(f"rm -rf ./LOFARINT_Data")
+        subprocess.run(f"rm -rf ./LOFARINT_Code", shell=True)
+        subprocess.run(f"rm -rf ./LOFARINT_Data", shell=True)
         os.chdir(og_dir)
         subprocess.run(f"rm -rf {os.path.join(self.outputdir, 'setup_results/')}", shell=True)
         subprocess.run(f"rm -rf {os.path.join(self.outputdir, 'toil/')}", shell=True)
