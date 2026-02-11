@@ -41,6 +41,14 @@ jobs:
       - name: Run MULTIWAVE test
         id: runcall
         shell: bash
+        env:
+          OS_APPLICATION_CREDENTIAL_ID: ${{ secrets.OS_APPLICATION_CREDENTIAL_ID }}
+          OS_APPLICATION_CREDENTIAL_SECRET: ${{ secrets.OS_APPLICATION_CREDENTIAL_SECRET }}
+          OS_AUTH_URL: ${{ secrets.OS_AUTH_URL }}
+          OS_AUTH_TYPE: ${{ vars.OS_AUTH_TYPE }}
+          OS_IDENTITY_API_VERSION: ${{ vars.OS_IDENTITY_API_VERSION }}
+          OS_INTERFACE: ${{ vars.OS_INTERFACE }}
+          OS_REGION_NAME: ${{ vars.OS_REGION_NAME }}
         run: |
           export PATH="$HOME/.local/bin:$PATH"
           export RFM_CONFIG_FILES="${PWD}/benchmarks/reframe_config.py"
