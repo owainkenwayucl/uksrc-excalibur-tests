@@ -342,7 +342,10 @@ def get_database(
         with open(local_db_file, 'wb') as local_file:
             local_file.write(obj_contents)
     except Exception as e:
-        print(f"Unable to get Database: {e}")
+        print(f"Unable to GET Database: {e}")
+        print(f"container={container}")
+        print(f"db_file={db_file}")
+        print(f"local_file={local_file}")
     finally:
         conn.close()
     sleep(1)
@@ -363,7 +366,10 @@ def put_database(
         with open(local_db_file, 'rb') as local_file:
             conn.put_object(container, db_file, contents=local_file)
     except Exception as e:
-        print(f"Unable to get Database: {e}")
+        print(f"Unable to PUT Database: {e}")
+        print(f"container={container}")
+        print(f"db_file={db_file}")
+        print(f"local_file={local_file}")
     finally:
         conn.close()
 
