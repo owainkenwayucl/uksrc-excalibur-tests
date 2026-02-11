@@ -68,8 +68,8 @@ class MicrobenchLOFARINT(rfm.RunOnlyRegressionTest):
     @run_before('setup')
     def download_data(self):
         if not os.path.isdir(os.path.join(self.lofarint_data_dir, "L693725_SB282_uv.MS")):
-            Address = "https://object.arcus.openstack.hpc.cam.ac.uk/swift/v1/AUTH_7ac3c0a502cd46c783b2128116165566/microbench_data/"
-            subprocess.run("wget -qO- {Address} | grep '^LOFARINT/' | xargs -n1 -I".format(Address=Address)+"{} wget -nH --cut-dirs=5 -R 'index.html' -x -P "+"{DataDir} {Address}".format(Address=Address, DataDir=self.lofarint_data_dir)+"{}", shell=True)
+            address = "https://object.arcus.openstack.hpc.cam.ac.uk/swift/v1/AUTH_7ac3c0a502cd46c783b2128116165566/microbench_data/"
+            subprocess.run("wget -qO- {Address} | grep '^LOFARINT/' | xargs -n1 -I".format(Address=address)+"{} wget -nH --cut-dirs=5 -R 'index.html' -x -P "+"{DataDir} {Address}".format(Address=address, DataDir=self.lofarint_data_dir)+"{}", shell=True)
             og_dir = os.getcwd()
             os.chdir(os.path.join(self.lofarint_data_dir, "L693725_SB282_uv.MS"))
             subprocess.run("cat table.f3.tar.gz.* | tar xzvf -", shell=True)
@@ -236,7 +236,7 @@ class MicrobenchLOFARINT(rfm.RunOnlyRegressionTest):
     @run_after('performance')
     def free_space(self):
         og_dir = os.getcwd()
-        os.chdir(os.path.dirname(os.path.abspath(self.__file__)))
+        os.chdir(os.path.dirname(os.path.abspath(__file__)))
         subprocess.run(f"rm -rf ./LOFARINT_Code", shell=True)
         subprocess.run(f"rm -rf ./LOFARINT_Data", shell=True)
         os.chdir(og_dir)
