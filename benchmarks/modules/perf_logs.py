@@ -1,5 +1,5 @@
 # moved from utils.py to separate the pandas dependency
-
+from time import sleep
 
 from .utils import *
 
@@ -345,6 +345,7 @@ def get_database(
         print(f"Unable to get Database: {e}")
     finally:
         conn.close()
+    sleep(1)
 
 def put_database(
         container : str,
@@ -404,4 +405,4 @@ class DatabaseConnection:
                 put_database(container=self.container, db_file=self.db_file, sess=self.sess, os_options=self.os_options)
             except Exception as e:
                 print(f"Error putting database: {e}")
-        subprocess.run(f"rm -f {self.db_file}")
+        subprocess.run(f"rm -f ./{self.db_file}", shell=True)
