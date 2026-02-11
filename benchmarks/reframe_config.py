@@ -110,10 +110,13 @@ class SwiftDBHandler(logging.Handler):
             for k, v in self.pending_records[0].items():
                 table_creation_string += f", {k} {('TEXT' if type(v)==str else 'REAL')} NOT NULL"
             table_creation_string+=");"
+            print(table_creation_string)
             db_c.cur.execute(table_creation_string)
+            db_c.con.commit()
             execute_many_string = f"""INSERT INTO {self.table_name} ({", ".join(self.pending_records[0].keys())}) VALUES (:{", :".join(self.pending_records[0].keys())})"""
             # Insert all pending records
             db_c.cur.executemany(execute_many_string, self.pending_records)
+            db_c.con.commit()
         self.pending_records = []
 
     def close(self):

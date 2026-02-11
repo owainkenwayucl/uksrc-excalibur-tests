@@ -345,7 +345,6 @@ def get_database(
         print(f"Unable to GET Database: {e}")
         print(f"container={container}")
         print(f"db_file={db_file}")
-        print(f"local_file={local_file}")
     finally:
         conn.close()
     sleep(1)
@@ -369,7 +368,6 @@ def put_database(
         print(f"Unable to PUT Database: {e}")
         print(f"container={container}")
         print(f"db_file={db_file}")
-        print(f"local_file={local_file}")
     finally:
         conn.close()
 
