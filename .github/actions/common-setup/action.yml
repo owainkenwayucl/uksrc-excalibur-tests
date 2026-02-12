@@ -63,10 +63,8 @@ runs:
       shell: bash
       run: |
         export SPACK_ENVIRONMENT=${{runner.workspace}}/uksrc_spack_env
-        echo 
-        if [ -d $SPACK_ENVIRONMENT ]; then
-          spack activate $SPACK_ENVIRONMENT
-        else
+        if [ ! -d $SPACK_ENVIRONMENT ]; then
+          source ${{runner.workspace}}/spack/share/spack/setup-env.sh
           spack env create --without-view -d $SPACK_ENVIRONMENT
           spack env activate $SPACK_ENVIRONMENT
           spack config add 'config:install_tree:root:$env/opt/spack'
