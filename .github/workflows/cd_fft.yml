@@ -1,11 +1,5 @@
-# This file works as a template for benchmarks being submitted to the runners hosted
-# on UKSRC hardware.
-#
-#
-#
-
-name: Template for tests to remote runnter
-run-name: ${{ github.actor }} is running.
+name: Deploy FFT benchmark to runner
+run-name: ${{ github.actor }} is running FFT Benchmark
 on:
   workflow_dispatch:
   workflow_call:
@@ -32,8 +26,7 @@ jobs:
         with:
           github-token: ${{ secrets.PAT_TOKEN }}
 
-  # All the remaining steps are examples of how steps can be run, each one must be set up for each benchmark.
-  run-test: # Name of test to run
+  run-FFT: # Name of test to run
     needs: discover-runners
     if: ${{ !cancelled() }}
     strategy:
@@ -44,16 +37,8 @@ jobs:
     environment: production
     steps:
       - uses: actions/checkout@v6
-      - uses: ./.github/actions/common-setup # This only installs the common software needed for the framework.
-
-      # add installation steps needed for specific test
-#      - name: Install stuff
-#        shell: bash
-#        run: |
-#          echo "Install commands"
-
-      # add steps to run the specific test
-      - name: Run stuff
+      - uses: ./.github/actions/common-setup
+      - name: Run FFT benchmark
         id: runcall
         shell: bash
         env:
@@ -73,4 +58,4 @@ jobs:
           if [ -f "${SPACK_ROOT}/share/spack/setup-env.sh" ]; then
             source "${SPACK_ROOT}/share/spack/setup-env.sh"
           fi
-          reframe -c ./benchmarks/apps/<TEST DIR> -n <TEST NAME> -r
+          reframe --system=${{ matrix.reframesystem }} -c ./benchmarks/apps/fft-bench -r
