@@ -22,6 +22,7 @@ runs:
         python-version: '3.10'
         cache: 'pip'
     - name: Install Excalibur-tests
+      id: inst_exctest
       shell: bash
       run: |
         if ! pip list 2> /dev/null | grep -q 'excalibur-tests'; then
@@ -42,8 +43,8 @@ runs:
         if ! pip list 2> /dev/null | grep -q 'dotenv'; then
           pip install dotenv
         fi
-    - name: Find & Install Spack
-      id: fspack
+    - name: Find or Install Spack
+      id: find_spack
       working-directory: ${{runner.workspace}}
       shell: bash
       run: |
@@ -52,6 +53,23 @@ runs:
           if [ ! -d spack ]; then
             git clone --depth=1 --branch=releases/v1.1 https://github.com/spack/spack.git
           fi
-          cd spack
-          echo "PATH=${PWD}/bin:${PATH}" >> "${GITHUB_ENV}"
+          source ${{runner.workspace}}/spack/share/spack/setup-env.sh
+          spack compiler find
+          echo "PATH=${{runner.workspace}}/spack/bin:${PATH}" >> "${GITHUB_ENV}"
+        fi
+    - name: Setup Spack env
+      id: set_spack
+      working-directory: "${{runner.workspace}}/uksrc-excalibur-tests-deploybranch"
+      shell: bash
+      run: |
+        export SPACK_ENVIRONMENT=${{runner.workspace}}/uksrc_spack_env
+        echo 
+        if [ -d $SPACK_ENVIRONMENT ]; then
+          spack activate $SPACK_ENVIRONMENT
+        else
+          spack env create --without-view -d $SPACK_ENVIRONMENT
+          spack env activate $SPACK_ENVIRONMENT
+          spack config add 'config:install_tree:root:$env/opt/spack'
+          spack -e $SPACK_ENVIRONMENT repo add ${{runner.workspace}}/uksrc-excalibur-tests-deploybranch/benchmarks/spack/repo
+          spack external find
         fi

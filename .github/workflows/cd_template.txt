@@ -65,12 +65,17 @@ jobs:
           OS_INTERFACE: ${{ vars.OS_INTERFACE }}
           OS_REGION_NAME: ${{ vars.OS_REGION_NAME }}
         run: |
+          # Declare Reframe variables
           export PATH="$HOME/.local/bin:$PATH"
           export RFM_CONFIG_FILES="${PWD}/benchmarks/reframe_config.py"
           export RFM_USE_LOGIN_SHELL="true"
+          # Declare Spack variables
+          echo "PATH=${{runner.workspace}}/spack/bin:${PATH}" >> "${GITHUB_ENV}"
           export SPACK_ROOT=$(which spack)
-          export GH_RUNNER=${{ matrix.runner }}
           if [ -f "${SPACK_ROOT}/share/spack/setup-env.sh" ]; then
             source "${SPACK_ROOT}/share/spack/setup-env.sh"
           fi
-          reframe -c ./benchmarks/apps/<TEST DIR> -n <TEST NAME> -r
+          export EXCALIBUR_SPACK_ENV=${{runner.workspace}}/uksrc_spack_env
+          # Start Run
+          export GH_RUNNER=${{ matrix.runner }}
+          reframe --system=${{ matrix.reframesystem }} -c ./benchmarks/apps/<TEST DIR> (-n <TEST NAME> #if only specific test)-r
