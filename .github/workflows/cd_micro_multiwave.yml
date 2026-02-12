@@ -1,7 +1,6 @@
 name: Deploy MULTIWAVE Microbenchmark to runner
 run-name: ${{ github.actor }} is running MULTIWAVE Microbenchmark.
 on:
-  workflow_dispatch:
   workflow_call:
     inputs:
       runner-matrix:

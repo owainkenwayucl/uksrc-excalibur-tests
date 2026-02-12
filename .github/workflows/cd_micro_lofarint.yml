@@ -1,7 +1,6 @@
 name: Deploy LOFARINT Microbenchmark to runner
 run-name: ${{ github.actor }} is running LOFARINT Microbenchmark.
 on:
-  workflow_dispatch:
   workflow_call:
     inputs:
       runner-matrix:
