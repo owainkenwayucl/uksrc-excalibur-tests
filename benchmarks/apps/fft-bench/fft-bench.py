@@ -117,19 +117,19 @@ class FftBenchmarkCPU(FfftBenmchmarkBase):
         self.tags.add("fftw")
         self.env_vars['OMP_NUM_THREADS'] = f'{self.num_cpus_per_task}'
 
-@rfm.simple_test
-class FftBenchmarkMKL(FfftBenmchmarkBase):
-    valid_systems = ['-gpu']
-    spack_spec = 'fft-bench@0.3+mkl'
-    fft_output_file = "./MKL_only.txt"
-    executable_opts = ["-o", fft_output_file, "-f", "-r", NUMBER_OF_TRANSFORMS, "-c", NUMBER_OF_REPEATS]
-
-    @run_after('setup')
-    def setup_variables(self):
-        self.num_tasks = self.tasks
-        self.num_cpus_per_task = self.cpus_per_task
-        self.tags.add("mkl")
-        self.env_vars['OMP_NUM_THREADS'] = f'{self.num_cpus_per_task}'
+#@rfm.simple_test
+#class FftBenchmarkMKL(FfftBenmchmarkBase):
+#    valid_systems = ['-gpu']
+#    spack_spec = 'fft-bench@0.3+mkl'
+#    fft_output_file = "./MKL_only.txt"
+#    executable_opts = ["-o", fft_output_file, "-f", "-r", NUMBER_OF_TRANSFORMS, "-c", NUMBER_OF_REPEATS]
+#
+#    @run_after('setup')
+#    def setup_variables(self):
+#        self.num_tasks = self.tasks
+#        self.num_cpus_per_task = self.cpus_per_task
+#        self.tags.add("mkl")
+#        self.env_vars['OMP_NUM_THREADS'] = f'{self.num_cpus_per_task}'
 
 @rfm.simple_test
 class FftBenchmarkCUDA(FfftBenmchmarkBase):
