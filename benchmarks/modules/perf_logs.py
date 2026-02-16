@@ -370,6 +370,8 @@ def update_confluence():
     ) as db:
         full_dataframes = load_all_test_data(db.con, db.cur)
 
+    print(os.environ.get('CONFLUENCE_SITE'))
+    print(os.environ.get('CONFLUENCE_EMAIL'))
     confluence_obj = Confluence(url=os.environ.get('CONFLUENCE_SITE'), username=os.environ.get('CONFLUENCE_EMAIL'), password=os.environ.get('CONFLUENCE_API_TOKEN'))
     page = confluence_obj.get_page_by_id(os.environ.get('CONFLUENCE_SPACE_ID'), expand="body.storage")
     body = page["body"]["storage"]["value"]

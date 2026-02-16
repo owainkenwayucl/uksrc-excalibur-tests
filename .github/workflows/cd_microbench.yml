@@ -36,6 +36,6 @@ jobs:
 
   update-confluence:
     needs: [ call-lofarint, call-eor, call-multiwave ]
-    uses: ./.github/workflows/update-confluence.yml
+    uses: update_confluence.yml
     secrets: inherit
 
