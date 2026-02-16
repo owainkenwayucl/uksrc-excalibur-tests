@@ -34,5 +34,7 @@ jobs:
           CONFLUENCE_EMAIL: ${{ secrets.CONFLUENCE_EMAIL }}
           CONFLUENCE_SITE: ${{ secrets.CONFLUENCE_SITE }}
           CONFLUENCE_SPACE_ID: ${{ secrets.CONFLUENCE_SPACE_ID }}
+          DB_CONTAINER: ${{ vars.DB_CONTAINER }}
+          DB_FILE: ${{ vars.DB_FILE }}
         run: |
           python3 -c "from benchmarks.modules.perf_logs import update_confluence; update_confluence()"

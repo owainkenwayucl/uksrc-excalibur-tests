@@ -48,6 +48,8 @@ jobs:
           OS_IDENTITY_API_VERSION: ${{ secrets.OS_IDENTITY_API_VERSION }}
           OS_INTERFACE: ${{ secrets.OS_INTERFACE }}
           OS_REGION_NAME: ${{ secrets.OS_REGION_NAME }}
+          DB_CONTAINER: ${{ vars.DB_CONTAINER }}
+          DB_FILE: ${{ vars.DB_FILE }}
         run: |
           # Declare Reframe variables
           export PATH="$HOME/.local/bin:$PATH"
