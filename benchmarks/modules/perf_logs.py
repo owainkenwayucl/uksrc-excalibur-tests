@@ -16,8 +16,6 @@ from keystoneauth1 import session
 from keystoneauth1.identity import v3
 from swiftclient.client import Connection
 import sqlite3
-from pathlib import Path
-from dotenv import load_dotenv
 
 def read_perflog(path):
     """ Return a pandas dataframe from a ReFrame performance log.
