@@ -1,4 +1,4 @@
-name: "Update Confluence Page"
+name: Update Confluence Page
 run-name: ${{ github.actor }} is updating the Confluence Page.
 on:
   workflow_dispatch:
