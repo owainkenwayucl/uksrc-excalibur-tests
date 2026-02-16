@@ -61,7 +61,6 @@ jobs:
             source "${SPACK_ROOT}/share/spack/setup-env.sh"
           fi
           export EXCALIBUR_SPACK_ENV=${{runner.workspace}}/uksrc_spack_env
-          spack env activate $EXCALIBUR_SPACK_ENV
           # Start Run
           export GH_RUNNER=${{ matrix.runner }}
           reframe --system=${{ matrix.reframesystem }} -c ./benchmarks/apps/fft-bench -r
