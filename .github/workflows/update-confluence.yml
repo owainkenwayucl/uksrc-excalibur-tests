@@ -19,7 +19,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
       - name: Python
-        uses:
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      - name: InstallPackages
+        shell: bash
+        run: |
+          if ! pip list 2> /dev/null | grep -q 'excalibur-tests'; then
+            pip install -e .[test]
+          fi
+          if ! pip list 2> /dev/null | grep -q 'pandas'; then
+            pip install pandas
+          fi
+          if ! pip list 2> /dev/null | grep -q 'ReFrame'; then
+            pip install reframe-hpc
+          fi
+          if ! pip list 2> /dev/null | grep -q 'keystoneauth1'; then
+            pip install keystoneauth1
+          fi
+          if ! pip list 2> /dev/null | grep -q 'python-swiftclient'; then
+            pip install python-swiftclient
+          fi
+          if ! pip list 2> /dev/null | grep -q 'dotenv'; then
+            pip install dotenv
+          fi
       - name: UpdateConfluence
         id: conf-update
         shell: bash
