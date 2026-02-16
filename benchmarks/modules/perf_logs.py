@@ -358,20 +358,17 @@ def build_table(table_name: str, content: list[dict]) -> str:
 
 
 def update_confluence():
-    os_options = {
-        "interface": os.environ.get("OS_INTERFACE"),
-        "region_name": os.environ.get('OS_REGION_NAME'),
-    }
     with DatabaseConnection(
-            container="excalibur_tests_results",
-            db_file="reframe_results.db",
-            os_options=os_options,
+            container=os.environ.get('DB_CONTAINER', 'excalibur_tests_results'),
+            db_file=os.environ.get('DB_FILE', 'reframe_results.db'),
+            os_options={
+                "interface": os.environ.get("OS_INTERFACE", "public"),
+                "region_name": os.environ.get('OS_REGION_NAME', "RegionOne"),
+            },
             read_only=True
     ) as db:
         full_dataframes = load_all_test_data(db.con, db.cur)
 
-    print(os.environ.get('CONFLUENCE_SITE'))
-    print(os.environ.get('CONFLUENCE_EMAIL'))
     confluence_obj = Confluence(url=os.environ.get('CONFLUENCE_SITE'), username=os.environ.get('CONFLUENCE_EMAIL'), password=os.environ.get('CONFLUENCE_API_TOKEN'))
     page = confluence_obj.get_page_by_id(os.environ.get('CONFLUENCE_SPACE_ID'), expand="body.storage")
     body = page["body"]["storage"]["value"]
