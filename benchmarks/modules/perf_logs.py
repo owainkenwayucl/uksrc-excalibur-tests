@@ -10,8 +10,6 @@ from matplotlib import pyplot as plt
 import matplotlib.dates as mdates
 from atlassian import Confluence
 from bs4 import BeautifulSoup
-
-
 from keystoneauth1 import session
 from keystoneauth1.identity import v3
 from swiftclient.client import Connection

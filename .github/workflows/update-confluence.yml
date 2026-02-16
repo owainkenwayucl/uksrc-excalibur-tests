@@ -14,42 +14,10 @@ on:
 
 jobs:
   update-confluence:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-      - name: Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.10'
-          cache: 'pip'
-      - name: InstallPackages
-        shell: bash
-        run: |
-          if ! pip list 2> /dev/null | grep -q 'excalibur-tests'; then
-            pip install -e .[test]
-          fi
-          if ! pip list 2> /dev/null | grep -q 'pandas'; then
-            pip install pandas
-          fi
-          if ! pip list 2> /dev/null | grep -q 'ReFrame'; then
-            pip install reframe-hpc
-          fi
-          if ! pip list 2> /dev/null | grep -q 'keystoneauth1'; then
-            pip install keystoneauth1
-          fi
-          if ! pip list 2> /dev/null | grep -q 'python-swiftclient'; then
-            pip install python-swiftclient
-          fi
-          if ! pip list 2> /dev/null | grep -q 'dotenv'; then
-            pip install dotenv
-          fi
-          if ! pip list 2> /dev/null | grep -q 'atlassian-python-api'; then
-            pip install atlassian-python-api
-          fi
-          if ! pip list 2> /dev/null | grep -q 'beautifulsoup4'; then
-            pip install beautifulsoup4
-          fi
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/common-setup
       - name: UpdateConfluence
         id: conf-update
         shell: bash
