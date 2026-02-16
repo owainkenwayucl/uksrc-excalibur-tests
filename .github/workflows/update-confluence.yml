@@ -34,4 +34,4 @@ jobs:
           CONFLUENCE_SITE: ${{ secrets.CONFLUENCE_SITE }}
           CONFLUENCE_SPACE_ID: ${{ secrets.CONFLUENCE_SPACE_ID }}
         run: |
-          python -c "from benchmarks.modules.perf_logs import update_confluence; update_confluence()"
+          python3 -c "from benchmarks.modules.perf_logs import update_confluence; update_confluence()"

@@ -288,7 +288,10 @@ def upload_plot(confluence_obj, page_id: str, filename: str, fig, table_name: st
     buf.seek(0)
 
     # Upload attachment
-    confluence_obj.attach_content(buf.read(), filename, content_type="image/png", page_id=page_id)
+    try:
+        confluence_obj.attach_content(buf.read(), filename, content_type="image/png", page_id=page_id)
+    except:
+        pass
 
     # Embed in page if not already present
     page = confluence_obj.get_page_by_id(page_id, expand="body.storage")
