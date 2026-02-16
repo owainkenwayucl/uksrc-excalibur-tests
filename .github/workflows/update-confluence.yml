@@ -1,0 +1,39 @@
+name: "Update Confluence Page"
+run-name: ${{ github.actor }} is updating the Confluence Page.
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      runner-matrix:
+        description: 'Pre-computed runner matrix JSON'
+        required: false
+        type: string
+#  schedule:
+#    - cron: "0 0 * * 1"
+# "Minute Hour DayOfMonth(1-31) Month(1-12) DayOfWeek(0-6, Sun - Sat)"
+
+jobs:
+  update-confluence:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Python
+        uses:
+      - name: UpdateConfluence
+        id: conf-update
+        shell: bash
+        env:
+          OS_APPLICATION_CREDENTIAL_ID: ${{ secrets.OS_APPLICATION_CREDENTIAL_ID }}
+          OS_APPLICATION_CREDENTIAL_SECRET: ${{ secrets.OS_APPLICATION_CREDENTIAL_SECRET }}
+          OS_AUTH_URL: ${{ secrets.OS_AUTH_URL }}
+          OS_AUTH_TYPE: ${{ vars.OS_AUTH_TYPE }}
+          OS_IDENTITY_API_VERSION: ${{ vars.OS_IDENTITY_API_VERSION }}
+          OS_INTERFACE: ${{ vars.OS_INTERFACE }}
+          OS_REGION_NAME: ${{ vars.OS_REGION_NAME }}
+          CONFLUENCE_API_TOKEN: ${{ vars.CONFLUENCE_API_TOKEN }}
+          CONFLUENCE_EMAIL: ${{ vars.CONFLUENCE_EMAIL }}
+          CONFLUENCE_SITE: ${{ vars.CONFLUENCE_SITE }}
+          CONFLUENCE_SPACE_ID: ${{ vars.CONFLUENCE_SPACE_ID }}
+        run: |
+          python -c "from benchmarks.modules.perf_logs import update_confluence; update_confluence()"

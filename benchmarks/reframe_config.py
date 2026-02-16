@@ -45,39 +45,7 @@ def spack_root_to_path():
     return spack_bindir + os.path.pathsep + path
 
 
-# _json_and_send allows for the sending of data to a Confluence table.
-def _json_and_send(record, extras, ignore_keys):
-    try:
-        with open(Path(__file__).parent / ".env") as f:
-            for line in f:
-                line = line.strip()
-                if line.startswith("#"):
-                    continue
-                key, value = line.split("=", 1)
-                key = key.strip()
-                os.environ[key] = value.strip().strip('"').strip("'")
-        bench_name = getattr(record, '__rfm_check__', None).bench_name
-        perfvars = record.__dict__.get('check_perfvars', {})
-
-        if isinstance(perfvars, dict) and 'send_confluence' in perfvars:
-            content = getattr(record, '__rfm_check__', None).output_dict_list
-            for output in content:
-                send_to_table(
-                    os.getenv("ATLASSIAN_SITE"),
-                    os.getenv("CONFLUENCE_SPACE_ID"),
-                    os.getenv("ATLASSIAN_EMAIL"),
-                    os.getenv("ATLASSIAN_API_TOKEN"),
-                    bench_name,
-                    output
-                )
-        else:
-            return None
-    except Exception as e:
-        # Avoid crashing ReFrame on logging paths; record and continue.
-        print(f"[perflog delegate] ERROR: {e}")
-    return None
-
-
+# swiftdb data sending updates a sql database object on an OpenStack swift object store.
 class SwiftDBHandler(logging.Handler):
     def __init__(self, container, db_file, os_options):
         super().__init__()
@@ -898,15 +866,6 @@ site_configuration = {
                     ),
                     'append': True
                 },
-#                {
-#                    'type': 'httpjson',
-#                    'url': 'https://uksrc.atlassian.net',
-#                    'level': 'info',
-#                    'json_formatter': _json_and_send,
-#                    'debug': False,
-#                    'extras': {'facility': 'reframe'},
-#                    'ignore_keys': [],
-#                },
                 {
                     'type': 'swiftdb',
                     'level': 'info',

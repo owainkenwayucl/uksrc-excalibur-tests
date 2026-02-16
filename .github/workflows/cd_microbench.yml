@@ -34,3 +34,8 @@ jobs:
       runner-matrix: ${{ needs.discover-runners.outputs.matrix }}
     secrets: inherit
 
+  update-confluence:
+    needs: [ call-lofarint, call-eor, call-multiwave ]
+    uses: ./.github/workflows/update-confluence.yml
+    secrets: inherit
+

@@ -55,7 +55,6 @@ runs:
           fi
           source ${{runner.workspace}}/spack/share/spack/setup-env.sh
           spack compiler find
-          echo "PATH=${{runner.workspace}}/spack/bin:${PATH}" >> "${GITHUB_ENV}"
         fi
     - name: Setup Spack env
       id: set_spack

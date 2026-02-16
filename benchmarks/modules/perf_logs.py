@@ -5,12 +5,12 @@ from .utils import *
 
 import pandas as pd
 
-import sys
-import json
-import uuid
-import requests
-from typing import AnyStr, Dict
-from requests.auth import HTTPBasicAuth
+import os, io
+from matplotlib import pyplot as plt
+import matplotlib.dates as mdates
+from atlassian import Confluence
+from bs4 import BeautifulSoup
+
 
 from keystoneauth1 import session
 from keystoneauth1.identity import v3
@@ -86,6 +86,7 @@ def read_perflog(path):
 
     return pd.DataFrame.from_records(records)
 
+
 def load_perf_logs(root='.', test=None, ext='.log', last=False):
     """ Convenience wrapper around read_perflog().
 
@@ -110,6 +111,7 @@ def load_perf_logs(root='.', test=None, ext='.log', last=False):
         perf_records = perf_records.sort_index().groupby(['sysname', 'partition', 'environ', 'testname', 'perf_var']).tail(1)
 
     return perf_records
+
 
 def tabulate_last_perf(test, index, perf_var, root='../../perflogs'):
     """ Retrieve last perf_log entry for each system/partition/environment.
@@ -143,188 +145,7 @@ def tabulate_last_perf(test, index, perf_var, root='../../perflogs'):
 
     return df
 
-#
-def iter_tables(node):
-    stack = [node]
-    while stack:
-        cur = stack.pop()
-        if isinstance(cur, dict):
-            if cur.get("type") == "table":
-                yield cur
-            for child in cur.get("content", []) or []:
-                stack.append(child)
-        elif isinstance(cur, list):
-            stack.extend(cur)
-
-def get_table_fragment_name_and_id(table_node):
-    name = None
-    local_id = None
-    for m in table_node.get("marks", []) or []:
-        if m.get("type") == "fragment":
-            attrs = m.get("attrs") or {}
-            name = attrs.get("name") or name
-            local_id = attrs.get("localId") or local_id
-    return name, local_id
-
-def table_cell_text(text: str):
-    return {
-        "type": "tableCell",
-        "attrs": {"colspan": 1, "rowspan": 1},
-        "content": [{"type": "paragraph", "content": ([{"type": "text", "text": text}] if text else "")}],
-    }
-
-def count_columns(table_node: dict) -> int:
-    rows = table_node.get("content") or []
-    if not rows:
-        return 0
-    first_row = rows[0]
-    return len(first_row.get("content") or [])
-
-def build_new_table(table_name: str, content: Dict) -> dict:
-    table_node = {
-        "type": "table",
-        "attrs": {
-            'layout': 'align-start',
-            'width': 941.0,
-        },
-        "marks": [
-            {
-                'type': 'fragment',
-                'attrs': {
-                    "name": table_name,
-                    "localId": str(uuid.uuid4())
-                }
-            }
-        ],
-        "content": [
-            {
-                "type": "tableRow",
-                "content": []
-            },
-            {
-                "type": "tableRow",
-                "content": []
-            }
-        ]
-    }
-    for k, v in content.items():
-        table_node["content"][0]["content"] += [{
-            'type': 'tableHeader',
-            'attrs': {
-                'colspan': 1,
-                'rowspan': 1
-            },
-            'content': [
-                {
-                    'type': 'paragraph',
-                    'content': [
-                        {
-                            'text': k,
-                            'type': 'text',
-                            'marks': [
-                                {
-                                    'type': 'strong'
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        }]
-        table_node["content"][1]["content"] += [{
-            'type': 'tableCell',
-            'attrs': {
-                'colspan': 1,
-                'rowspan': 1
-            },
-            'content': [
-                {
-                    'type': 'paragraph',
-                    'content': [
-                        {
-                            'text': v,
-                            'type': 'text',
-                        }
-                    ]
-                }
-            ]
-        }]
-    return table_node
-
-def send_to_table(site: AnyStr, space_id: AnyStr, email: AnyStr, api_token: AnyStr, table_name: AnyStr, content: Dict):
-    assert api_token.strip() == api_token, "API token has leading/trailing whitespace/newlines"
-    url = f"{site}/wiki/api/v2/pages/{space_id}?body-format=atlas_doc_format"
-    response = requests.get(
-        url,
-        headers={"Accept": "application/json", "User-Agent": "step1-list-tables/0.1"},
-        auth=HTTPBasicAuth(email, api_token),
-        timeout=30,
-    )
-    if response.status_code != 200:
-        print(response.text[:800])
-        sys.exit(2)
-    page = response.json()
-    title = page.get("title")
-    version_num = (page.get("version") or {}).get("number") or 0
-    value = page.get("body", {}).get("atlas_doc_format", {}).get("value")
-    adf = json.loads(value) if isinstance(value, str) else value
-    table_of_interest = None
-    for i, tbl in enumerate(iter_tables(adf), start=1):
-        name, local_id = get_table_fragment_name_and_id(tbl)
-        if name == table_name:
-            table_of_interest = tbl
-            break
-
-    if not bool(table_of_interest):
-        new_table = build_new_table(table_name, content)
-        # PUT back with version+1 (ADF must be stringified in v2 API)
-        adf["content"].append({
-            "type": "paragraph",
-            'content': [
-                {
-                    'text': f'{table_name}',
-                    'type': 'text'
-                }
-            ],
-            'marks': [
-                {
-                    'type': 'strong'
-                }
-            ]
-        })
-        adf["content"].append(new_table)
-    else:
-        ncols = count_columns(table_of_interest)
-        if ncols != len(content):
-            raise ValueError(f"{ncols} Columns found, but content of {content}, does not match.")
-        new_cells = [table_cell_text(content_text) for content_text in content.values()]
-        new_row = {"type": "tableRow", "content": new_cells}
-        table_of_interest.setdefault("content", []).append(new_row)
-
-    # PUT back with version+1 (ADF must be stringified in v2 API)
-    put_url = f"{site}/wiki/api/v2/pages/{space_id}"
-    payload = {
-        "id": space_id,
-        "status": "current",
-        "title": title,
-        "version": {"number": version_num + 1},
-        "body": {"atlas_doc_format": {"value": json.dumps(adf), "representation": "atlas_doc_format"}},
-    }
-
-    pr = requests.put(
-        put_url,
-        headers={"Accept": "application/json", "Content-Type": "application/json",
-                 "User-Agent": "step2-append-row/0.1"},
-        auth=HTTPBasicAuth(email, api_token),
-        data=json.dumps(payload),
-        timeout=30,
-    )
-
-    if pr.status_code not in (200, 202):
-        print(pr.text[:1000])
-        sys.exit(4)
-    return
-#
+# Functions and class for handling, updating and reading a swift object store saved sql database using sqlite.
 def get_database(
         container : str,
         db_file : str,
@@ -410,3 +231,163 @@ class DatabaseConnection:
             except Exception as e:
                 print(f"Error putting database: {e}")
         subprocess.run(f"rm -f ./{self.db_file}", shell=True)
+
+# The following functions provide utilies for getting results from a swift object store sql database and sending
+# results to a Confuence page.
+def load_all_test_data(conn, cursor):
+    """Load all data from all tables into a dictionary of DataFrames."""
+
+    # Get all table names
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+    tables = [row[0] for row in cursor.fetchall()]
+
+    data = {}
+    for table in tables:
+        if table != "sqlite_sequence":
+            try:
+                # Load entire table into DataFrame
+                data[table] = pd.read_sql_query(f"SELECT * FROM {table}", conn)
+                data[table]['test_time_formated'] = pd.to_datetime(data[table]['TimeOfTest'])
+            except Exception as e:
+                print(f"Error loading table {table}: {e}")
+                data[table] = pd.DataFrame()
+    return data
+
+
+def get_last_n_runs_per_site(df, n=2):
+    """Filter DataFrame to last N runs (by date) per site."""
+    # Rank runs per site by date
+    df['run_rank'] = df.groupby('SystemPartition')['TimeOfTest'].rank(method='dense', ascending=False)
+
+    # Keep last N runs
+    result = df[df['run_rank'] <= n].copy()
+
+    # Clean up helper columns
+    result = result.drop(columns=['run_rank', 'testID'])
+    return result
+
+
+def create_plot(data_frame, test_name):
+    temp_daterange = data_frame['test_time_formated'].max() - data_frame['test_time_formated'].min()
+
+    temp_plot = data_frame.plot(kind="line", x="test_time_formated", y="ExecutionTime")
+    temp_plot.legend().set_visible(False)
+    temp_plot.set_title(test_name)
+    temp_plot.set_ylim((data_frame['ExecutionTime'].min()*0.99, data_frame['ExecutionTime'].max()*1.01))
+    temp_plot.yaxis.set_label_text("Execution Time [s]")
+    temp_plot.xaxis.set_label_text("Time of Test")
+    if temp_daterange > pd.Timedelta(days=90):
+        temp_plot.xaxis.set_major_locator(mdates.MonthLocator())
+        temp_plot.xaxis.set_major_formatter(mdates.DateFormatter('%y-%m'))
+    else:
+        temp_plot.xaxis.set_major_locator(mdates.AutoDateLocator())
+        temp_plot.xaxis.set_major_formatter(mdates.DateFormatter('%y-%m-%d'))
+
+    return temp_plot.get_figure()
+
+def upload_plot(confluence_obj, page_id: str, filename: str, fig, table_name: str = None):
+    # Save plot to buffer
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", bbox_inches="tight")
+    buf.seek(0)
+
+    # Upload attachment
+    confluence_obj.attach_content(buf.read(), filename, content_type="image/png", page_id=page_id)
+
+    # Embed in page if not already present
+    page = confluence_obj.get_page_by_id(page_id, expand="body.storage")
+    body = page["body"]["storage"]["value"]
+    image_tag = f'<ac:image><ri:attachment ri:filename="{filename}" /></ac:image>'
+
+    if f'ri:filename="{filename}"' not in body:
+        if table_name:
+            soup = BeautifulSoup(body, "html.parser")
+            for table in soup.find_all("table"):
+                first_th = table.find("th", colspan=True)
+                if first_th and first_th.get_text(strip=True) == table_name:
+                    table.insert_before(BeautifulSoup(image_tag, "html.parser"))
+                    body = str(soup)
+                    break
+        else:
+            print("Image was new")
+            body += image_tag
+
+    try:
+        confluence_obj.update_page(page_id, title=page["title"], body=body)
+    except:
+        pass
+
+def update_table(page_body: str, table_name: str, content: list[dict]) -> str:
+    soup = BeautifulSoup(page_body, "html.parser")
+
+    for table in soup.find_all("table"):
+        first_th = table.find("th", colspan=True)
+        if first_th and first_th.get_text(strip=True) == table_name:
+            rows = table.find_all("tr")
+            # Keep first two rows (title + headers), remove the rest
+            for row in rows[2:]:
+                row.decompose()
+
+            headers = [th.get_text(strip=True) for th in rows[1].find_all("th")]
+            for entry in content:
+                new_row = soup.new_tag("tr")
+                for h in headers:
+                    td = soup.new_tag("td")
+                    td.string = str(entry.get(h, ""))
+                    new_row.append(td)
+                table.append(new_row)
+
+            return str(soup)
+    raise ValueError(f"Table '{table_name}' not found in page body")
+
+def build_table(table_name: str, content: list[dict]) -> str:
+    if not content:
+        return ""
+
+    headers = list(content[0].keys())
+    col_count = len(headers)
+
+    rows = [
+        f'<tr><th colspan="{col_count}" style="text-align:center;">{table_name}</th></tr>',
+        "<tr>" + "".join(f"<th>{h}</th>" for h in headers) + "</tr>",
+    ]
+
+    for row in content:
+        rows.append("<tr>" + "".join(f"<td>{row.get(h, '')}</td>" for h in headers) + "</tr>")
+
+    return "<table>" + "".join(rows) + "</table>"
+
+
+def update_confluence():
+    os_options = {
+        "interface": os.environ.get("OS_INTERFACE"),
+        "region_name": os.environ.get('OS_REGION_NAME'),
+    }
+    with DatabaseConnection(
+            container="excalibur_tests_results",
+            db_file="reframe_results.db",
+            os_options=os_options,
+            read_only=True
+    ) as db:
+        full_dataframes = load_all_test_data(db.con, db.cur)
+
+    confluence_obj = Confluence(url=os.environ.get('CONFLUENCE_SITE'), username=os.environ.get('CONFLUENCE_EMAIL'), password=os.environ.get('CONFLUENCE_API_TOKEN'))
+    page = confluence_obj.get_page_by_id(os.environ.get('CONFLUENCE_SPACE_ID'), expand="body.storage")
+    body = page["body"]["storage"]["value"]
+
+    for k,v in full_dataframes.items():
+        if k != "sqlite_sequence":
+            plot_k_test = create_plot(data_frame=v, test_name=k)
+            k_content = get_last_n_runs_per_site(v, 2).to_dict(orient="records")
+            print(k_content)
+            if k in body:
+                print("Table Existed")
+                body = update_table(body, k, k_content)
+            else:
+                print("Table was new")
+                body += build_table(k, k_content)
+            try:
+                confluence_obj.update_page(page_id=os.environ.get('CONFLUENCE_SPACE_ID'), title=page["title"], body=body)
+            except:
+                continue
+            upload_plot(confluence_obj=confluence_obj, page_id=os.environ.get('CONFLUENCE_SPACE_ID'), filename=f"{k}.png", fig=plot_k_test, table_name=k)
