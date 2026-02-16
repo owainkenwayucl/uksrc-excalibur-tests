@@ -8,7 +8,7 @@ from reframe.core.logging import register_log_handler
 CONFIG_DIR = Path(__file__).resolve().parent
 if str(CONFIG_DIR) not in sys.path:
     sys.path.insert(0, str(CONFIG_DIR))
-from modules.perf_logs import send_to_table, DatabaseConnection
+from modules.perf_logs import DatabaseConnection
 
 # OpenMPI Launcher on COSMA7 Rockport network:
 # <https://www.dur.ac.uk/icc/cosma/support/rockport/>.
