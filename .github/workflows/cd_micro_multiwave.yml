@@ -58,8 +58,8 @@ jobs:
           # Declare Spack variables
           echo "PATH=${{runner.workspace}}/spack/bin:${PATH}" >> "${GITHUB_ENV}"
           export SPACK_ROOT=$(which spack)
-          if [ -f "${SPACK_ROOT}/share/spack/setup-env.sh" ]; then
-            source "${SPACK_ROOT}/share/spack/setup-env.sh"
+          if [ -z "${SPACK_ROOT}" ]; then
+            source ${{runner.workspace}}/spack/share/spack/setup-env.sh
           fi
           export EXCALIBUR_SPACK_ENV=${{runner.workspace}}/uksrc_spack_env
           # Start Run
