@@ -160,6 +160,7 @@ def get_database(
             local_file.write(obj_contents)
     except Exception as e:
         print(f"Unable to GET Database: {e}")
+        print(f"{os_options}")
         print(f"container={container}")
         print(f"db_file={db_file}")
     finally:
@@ -206,6 +207,9 @@ class DatabaseConnection:
             application_credential_id=os.environ.get('OS_APPLICATION_CREDENTIAL_ID'),
             application_credential_secret=os.environ.get('OS_APPLICATION_CREDENTIAL_SECRET')
         )
+        print(os.environ.get('OS_AUTH_URL'))
+        print(os.environ.get('OS_APPLICATION_CREDENTIAL_ID'))
+        print(os.environ.get('OS_APPLICATION_CREDENTIAL_SECRET'))
         self.sess = session.Session(auth=self.auth)
 
     def __enter__(self):
