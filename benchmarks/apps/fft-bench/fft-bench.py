@@ -12,7 +12,7 @@ from benchmarks.modules.utils import SpackTest
 NUMBER_OF_TRANSFORMS = '7'
 NUMBER_OF_REPEATS = '10'
 
-class FfftBenmchmarkBase(SpackTest):
+class FftBenmchmarkBase(SpackTest):
     # Systems and programming environments where to run this benchmark.
     # Systems/partitions can be identified by their features, `+feature` is a
     # partition which has the named feature, `-feature` is a partition which
@@ -96,7 +96,7 @@ class FfftBenmchmarkBase(SpackTest):
 
 
 @rfm.simple_test
-class FftBenchmarkCPU(FfftBenmchmarkBase):
+class FftBenchmarkCPU(FftBenmchmarkBase):
     valid_systems = ['*']
     spack_spec = 'fft-bench@0.3+fftw~cuda~rocm'
     spack_logfile = 'spack-build-log-fftw.txt'
@@ -118,7 +118,7 @@ class FftBenchmarkCPU(FfftBenmchmarkBase):
         self.env_vars['OMP_NUM_THREADS'] = f'{self.num_cpus_per_task}'
 
 #@rfm.simple_test
-#class FftBenchmarkMKL(FfftBenmchmarkBase):
+#class FftBenchmarkMKL(FftBenmchmarkBase):
 #    valid_systems = ['-gpu']
 #    spack_spec = 'fft-bench@0.3+mkl'
 #    fft_output_file = "./MKL_only.txt"
@@ -132,7 +132,7 @@ class FftBenchmarkCPU(FfftBenmchmarkBase):
 #        self.env_vars['OMP_NUM_THREADS'] = f'{self.num_cpus_per_task}'
 
 @rfm.simple_test
-class FftBenchmarkCUDA(FfftBenmchmarkBase):
+class FftBenchmarkCUDA(FftBenmchmarkBase):
     valid_systems = ['+gpu +cuda']
     spack_spec = 'fft-bench@0.3+cuda~rocm'
     spack_logfile = 'spack-build-log-cuda.txt'
@@ -150,7 +150,7 @@ class FftBenchmarkCUDA(FfftBenmchmarkBase):
         self.extra_resources['gpu'] = {'num_gpus_per_node': self.num_gpus_per_node}
 
 @rfm.simple_test
-class FftBenchmarkROCM(FfftBenmchmarkBase):
+class FftBenchmarkROCM(FftBenmchmarkBase):
     valid_systems = ['+gpu +rocm']
     spack_spec = 'fft-bench@0.3+rocm~cuda'
     spack_logfile = 'spack-build-log-rocm.txt'

@@ -3,11 +3,6 @@ run-name: ${{ github.actor }} is updating the Confluence Page.
 on:
   workflow_dispatch:
   workflow_call:
-    inputs:
-      runner-matrix:
-        description: 'Pre-computed runner matrix JSON'
-        required: false
-        type: string
 #  schedule:
 #    - cron: "0 0 * * 1"
 # "Minute Hour DayOfMonth(1-31) Month(1-12) DayOfWeek(0-6, Sun - Sat)"
