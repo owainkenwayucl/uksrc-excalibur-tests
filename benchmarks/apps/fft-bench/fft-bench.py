@@ -114,7 +114,7 @@ class FftBenchmarkCPU(FftBenmchmarkBase):
     def setup_variables(self):
         self.num_tasks = self.tasks
         self.num_cpus_per_task = self.cpus_per_task
-        self.tags.add("fftw")
+        self.tags.add("+fftw")
         self.env_vars['OMP_NUM_THREADS'] = f'{self.num_cpus_per_task}'
 
 #@rfm.simple_test
@@ -145,7 +145,7 @@ class FftBenchmarkCUDA(FftBenmchmarkBase):
     def setup_variables(self):
         self.num_tasks = self.tasks
         self.num_cpus_per_task = self.cpus_per_task
-        self.tags.add("fftw+cuda")
+        self.tags.add("+fftw+cuda")
         self.env_vars['OMP_NUM_THREADS'] = f'{self.num_cpus_per_task}'
         self.extra_resources['gpu'] = {'num_gpus_per_node': self.num_gpus_per_node}
 
@@ -163,6 +163,6 @@ class FftBenchmarkROCM(FftBenmchmarkBase):
     def setup_variables(self):
         self.num_tasks = self.tasks
         self.num_cpus_per_task = self.cpus_per_task
-        self.tags.add("fftw+rocm")
+        self.tags.add("+fftw+rocm")
         self.env_vars['OMP_NUM_THREADS'] = f'{self.num_cpus_per_task}'
         self.extra_resources['gpu'] = {'num_gpus_per_node': self.num_gpus_per_node}
