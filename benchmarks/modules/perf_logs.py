@@ -5,7 +5,7 @@ from .utils import *
 
 import pandas as pd
 
-import os, io
+import os, io, re
 from matplotlib import pyplot as plt
 import matplotlib.dates as mdates
 from atlassian import Confluence
@@ -257,16 +257,15 @@ def get_last_n_runs(df, n=2):
 
     extra_columns = [c for c in df.columns if c not in ["testID", "TimeOfTest", "SystemPartition", "ExecutionTime", "AvgTimeMS", "test_time_formated", 'run_rank']]
 
-    df['run_rank'] = df.groupby(['SystemPartition'] + extra_columns)['TimeOfTest'].rank(method='dense',
-                                                                                                        ascending=False)
-    result = df[df['run_rank'] <= 2].copy()
+    df['run_rank'] = df.groupby(['SystemPartition'] + extra_columns)['TimeOfTest'].rank(method='dense', ascending=False)
+    result = df[df['run_rank'] <= n].copy()
     result = result.sort_values(
         ['SystemPartition'] + extra_columns + ['TimeOfTest'],
         ascending=[True] + [True for i in range(len(extra_columns))] + [False]
     ).reset_index(drop=True)
 
     # Clean up helper columns
-    result = result.drop(columns=['run_rank', 'testID'])
+    result = result.drop(columns=['run_rank', 'testID', 'test_time_formated'])
     return result
 
 
@@ -277,14 +276,25 @@ def create_plot(data_frame, test_name):
     extra_cols = [c for c in data_frame.columns if c not in ["testID", "TimeOfTest", "SystemPartition", "ExecutionTime", "AvgTimeMS", "test_time_formated", 'run_rank']]
     group_cols = ["SystemPartition"] + extra_cols
     fig, ax = plt.subplots(figsize=(12, 6))
-
+    skipped = 0
+    attempt = 0
     if extra_cols:
         for name, group in data_frame.groupby(group_cols):
+            attempt += 1
             label = " | ".join(str(v) for v in (name if isinstance(name, tuple) else (name,)))
-            group.sort_values("test_time_formated").plot(
-                kind="line", x="test_time_formated", y=y_column, ax=ax, label=label
-            )
+            if len(group["test_time_formated"]) < 2:
+                skipped += 1
+            else:
+                group.sort_values("test_time_formated").plot(
+                    kind="line", x="test_time_formated", y=y_column, ax=ax, label=label
+                )
+        if skipped == attempt:
+
+            return None
+
     else:
+        if len(data_frame["test_time_formated"]) < 2:
+            return None
         data_frame.sort_values("test_time_formated").plot(
             kind="line", x="test_time_formated", y=y_column, ax=ax
         )
@@ -331,7 +341,6 @@ def upload_plot(confluence_obj, page_id: str, filename: str, fig, table_name: st
                     body = str(soup)
                     break
         else:
-            print("Image was new")
             body += image_tag
 
     try:
@@ -388,6 +397,15 @@ def wrap_in_expand(title: str, inner_html: str) -> str:
         f'</ac:structured-macro>'
     )
 
+def parse_system_partition(system_partition):
+    parts = system_partition.split(" - ")
+    if parts[0] == "None":
+        system = "Local Tests"
+    else:
+        system = parts[0].split("_", 1)[1]  # "runner_Cosma8" → "Cosma8"
+    partition = parts[-1]                # last segment
+    return system, partition
+
 
 def update_confluence():
     with DatabaseConnection(
@@ -405,42 +423,46 @@ def update_confluence():
     page = confluence_obj.get_page_by_id(os.environ.get('CONFLUENCE_SPACE_ID'), expand="body.storage")
     body = page["body"]["storage"]["value"]
 
-    for k,v in full_dataframes.items():
+    structure = {}
+    for k, v in full_dataframes.items():
         if k == "sqlite_sequence":
             continue
+        for sp in v["SystemPartition"].unique():
+            system, partition = parse_system_partition(sp)
+            system = "Local Tests" if system == "None" else system
+            structure.setdefault(system, {}).setdefault(partition, []).append(
+                (k, v[v["SystemPartition"] == sp])
+            )
 
-        test_sections =  ""
-        for partition, partition_df in v.groupby("SystemPartition"):
-            partition_abr = partition[partition.find("_")+1:partition.find(" -")]
-            fig = create_plot(data_frame=partition_df, test_name=f"{k} - {partition_abr}")
-            filename = f"{k}_{partition_abr}.png"
+    for system in sorted(structure):
+        system_inner = ""
+        for partition in sorted(structure[system]):
+            partition_inner = ""
+            for test_name, partition_df in structure[system][partition]:
 
-            table_data = get_last_n_runs(partition_df, 2)
-            table_html = build_table(k, table_data.to_dict(orient="records"))
+                table_data = get_last_n_runs(partition_df, 2)
+                table_html = build_table(test_name, table_data.to_dict(orient="records"))
 
-            image_tag = f'<ac:image><ri:attachment ri:filename="{filename}" /></ac:image>'
-            inner = image_tag + table_html
-            test_sections += wrap_in_expand(partition, inner)
+                fig = create_plot(data_frame=partition_df, test_name=f"{test_name} - {partition}")
+                if fig is not None:
+                    filename = f"{test_name}_{system}_{partition}.png"
+                    upload_plot(confluence_obj, os.environ.get('CONFLUENCE_SPACE_ID'), filename, fig)
+                    image_tag = f'<ac:image><ri:attachment ri:filename="{filename}" /></ac:image>'
+                    partition_inner += image_tag + table_html
+                else:
+                    partition_inner += table_html
 
-            upload_plot(confluence_obj, os.environ.get('CONFLUENCE_SPACE_ID'), filename, fig)
+            system_inner += wrap_in_expand(partition, partition_inner)
 
-        body += test_sections
-
+        search_start = f'<ac:parameter ac:name="title">{system}</ac:parameter><ac:rich-text-body>'
+        search_end = '</ac:rich-text-body>'
+        if search_start in body:
+            pattern = re.escape(search_start) + r'.*?' + re.escape(search_end)
+            replacement = search_start + system_inner + search_end
+            body = re.sub(pattern, replacement, body, count=1, flags=re.DOTALL)
+        else:
+            body += wrap_in_expand(system, system_inner)
     try:
         confluence_obj.update_page(page_id=os.environ.get('CONFLUENCE_SPACE_ID'), title=page["title"], body=body)
     except:
         pass
-            #plot_k_test = create_plot(data_frame=v, test_name=k)
-            #k_content = get_last_n_runs(v, 2).to_dict(orient="records")
-            #print(k_content)
-            #if k in body:
-            #    print("Table Existed")
-            #    body = update_table(body, k, k_content)
-            #else:
-            #    print("Table was new")
-            #    body += build_table(k, k_content)
-            #try:
-            #    confluence_obj.update_page(page_id=os.environ.get('CONFLUENCE_SPACE_ID'), title=page["title"], body=body)
-            #except:
-            #    continue
-            #upload_plot(confluence_obj=confluence_obj, page_id=os.environ.get('CONFLUENCE_SPACE_ID'), filename=f"{k}.png", fig=plot_k_test, table_name=k)
