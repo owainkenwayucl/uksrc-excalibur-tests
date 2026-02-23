@@ -38,7 +38,7 @@ class FftBenmchmarkBase(SpackTest):
     fft_output_file = "./default.txt"
 
     def __init__(self):
-        self.bench_name = "FFT Bench"
+        self.bench_name = "FFT_Bench"
         self.output_dict_list = []
 
     @run_before('run')
@@ -71,10 +71,10 @@ class FftBenmchmarkBase(SpackTest):
         - SystemPartition [str]
         - <Desired Output variables> [Format Determinable]
         """
-        pattern = r'(?P<Library>\S+), (?P<Mem_Size>\S+), (?P<Avg_time>\S+),'
+        pattern = r'(?P<Library>\S+), (?P<Mem_Size>\S+), (?P<ExecutionTime>\S+),'
         output_list = sn.extractall(pattern,
                                     pathlib.Path(self.stagedir) / self.fft_output_file,
-                                    ['Library', 'Mem_Size', 'Avg_time'],
+                                    ['Library', 'Mem_Size', 'ExecutionTime'],
                                     [str, float, float])
         time_of_test = str(dt.now().strftime("%Y-%m-%d-%H:%M"))
 
@@ -85,7 +85,7 @@ class FftBenmchmarkBase(SpackTest):
                     "SystemPartition": f"{os.environ.get('GH_RUNNER')} - {self.current_system.name} - {self.current_partition.name}",
                     "Library": output[0],
                     "ArraySizeMB": output[1],
-                    "AvgTimeMS":output[2]
+                    "ExecutionTime":output[2]
                 }
             ]
         return
@@ -134,7 +134,7 @@ class FftBenchmarkCPU(FftBenmchmarkBase):
 @rfm.simple_test
 class FftBenchmarkCUDA(FftBenmchmarkBase):
     valid_systems = ['+gpu +cuda']
-    spack_spec = 'fft-bench@0.3+cuda~rocm'
+    spack_spec = 'fft-bench@0.3+fftw+cuda~rocm'
     spack_logfile = 'spack-build-log-cuda.txt'
     num_gpus_per_node = 1
 
@@ -152,7 +152,7 @@ class FftBenchmarkCUDA(FftBenmchmarkBase):
 @rfm.simple_test
 class FftBenchmarkROCM(FftBenmchmarkBase):
     valid_systems = ['+gpu +rocm']
-    spack_spec = 'fft-bench@0.3+rocm~cuda'
+    spack_spec = 'fft-bench@0.3+fftw+rocm~cuda'
     spack_logfile = 'spack-build-log-rocm.txt'
     num_gpus_per_node = 1
 

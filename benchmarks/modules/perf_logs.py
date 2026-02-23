@@ -251,13 +251,19 @@ def load_all_test_data(conn, cursor):
     return data
 
 
-def get_last_n_runs_per_site(df, n=2):
+def get_last_n_runs(df, n=2):
     """Filter DataFrame to last N runs (by date) per site."""
     # Rank runs per site by date
-    df['run_rank'] = df.groupby('SystemPartition')['TimeOfTest'].rank(method='dense', ascending=False)
 
-    # Keep last N runs
-    result = df[df['run_rank'] <= n].copy()
+    extra_columns = [c for c in df.columns if c not in ["testID", "TimeOfTest", "SystemPartition", "ExecutionTime", "AvgTimeMS", "test_time_formated", 'run_rank']]
+
+    df['run_rank'] = df.groupby(['SystemPartition'] + extra_columns)['TimeOfTest'].rank(method='dense',
+                                                                                                        ascending=False)
+    result = df[df['run_rank'] <= 2].copy()
+    result = result.sort_values(
+        ['SystemPartition'] + extra_columns + ['TimeOfTest'],
+        ascending=[True] + [True for i in range(len(extra_columns))] + [False]
+    ).reset_index(drop=True)
 
     # Clean up helper columns
     result = result.drop(columns=['run_rank', 'testID'])
@@ -265,22 +271,38 @@ def get_last_n_runs_per_site(df, n=2):
 
 
 def create_plot(data_frame, test_name):
+    y_column = "AvgTimeMS" if "AvgTimeMS" in data_frame else "ExecutionTime"
     temp_daterange = data_frame['test_time_formated'].max() - data_frame['test_time_formated'].min()
 
-    temp_plot = data_frame.plot(kind="line", x="test_time_formated", y="ExecutionTime")
-    temp_plot.legend().set_visible(False)
-    temp_plot.set_title(test_name)
-    temp_plot.set_ylim((data_frame['ExecutionTime'].min()*0.99, data_frame['ExecutionTime'].max()*1.01))
-    temp_plot.yaxis.set_label_text("Execution Time [s]")
-    temp_plot.xaxis.set_label_text("Time of Test")
-    if temp_daterange > pd.Timedelta(days=90):
-        temp_plot.xaxis.set_major_locator(mdates.MonthLocator())
-        temp_plot.xaxis.set_major_formatter(mdates.DateFormatter('%y-%m'))
-    else:
-        temp_plot.xaxis.set_major_locator(mdates.AutoDateLocator())
-        temp_plot.xaxis.set_major_formatter(mdates.DateFormatter('%y-%m-%d'))
+    extra_cols = [c for c in data_frame.columns if c not in ["testID", "TimeOfTest", "SystemPartition", "ExecutionTime", "AvgTimeMS", "test_time_formated", 'run_rank']]
+    group_cols = ["SystemPartition"] + extra_cols
+    fig, ax = plt.subplots(figsize=(12, 6))
 
-    return temp_plot.get_figure()
+    if extra_cols:
+        for name, group in data_frame.groupby(group_cols):
+            label = " | ".join(str(v) for v in (name if isinstance(name, tuple) else (name,)))
+            group.sort_values("test_time_formated").plot(
+                kind="line", x="test_time_formated", y=y_column, ax=ax, label=label
+            )
+    else:
+        data_frame.sort_values("test_time_formated").plot(
+            kind="line", x="test_time_formated", y=y_column, ax=ax
+        )
+        ax.legend().set_visible(False)
+
+    ax.set_title(test_name)
+    ax.set_ylim((data_frame[y_column].min()*0.975, data_frame[y_column].max()*1.025))
+    ax.yaxis.set_label_text("Execution Time [s]")
+    ax.xaxis.set_label_text("Time of Test")
+
+    if temp_daterange > pd.Timedelta(days=90):
+        ax.xaxis.set_major_locator(mdates.MonthLocator())
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%y-%m'))
+    else:
+        ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%y-%m-%d'))
+
+    return fig
 
 def upload_plot(confluence_obj, page_id: str, filename: str, fig, table_name: str = None):
     # Save plot to buffer
@@ -358,6 +380,15 @@ def build_table(table_name: str, content: list[dict]) -> str:
     return "<table>" + "".join(rows) + "</table>"
 
 
+def wrap_in_expand(title: str, inner_html: str) -> str:
+    return (
+        f'<ac:structured-macro ac:name="expand">'
+        f'<ac:parameter ac:name="title">{title}</ac:parameter>'
+        f'<ac:rich-text-body>{inner_html}</ac:rich-text-body>'
+        f'</ac:structured-macro>'
+    )
+
+
 def update_confluence():
     with DatabaseConnection(
             container=os.environ.get('DB_CONTAINER', 'excalibur_tests_results'),
@@ -375,18 +406,41 @@ def update_confluence():
     body = page["body"]["storage"]["value"]
 
     for k,v in full_dataframes.items():
-        if k != "sqlite_sequence":
-            plot_k_test = create_plot(data_frame=v, test_name=k)
-            k_content = get_last_n_runs_per_site(v, 2).to_dict(orient="records")
-            print(k_content)
-            if k in body:
-                print("Table Existed")
-                body = update_table(body, k, k_content)
-            else:
-                print("Table was new")
-                body += build_table(k, k_content)
-            try:
-                confluence_obj.update_page(page_id=os.environ.get('CONFLUENCE_SPACE_ID'), title=page["title"], body=body)
-            except:
-                continue
-            upload_plot(confluence_obj=confluence_obj, page_id=os.environ.get('CONFLUENCE_SPACE_ID'), filename=f"{k}.png", fig=plot_k_test, table_name=k)
+        if k == "sqlite_sequence":
+            continue
+
+        test_sections =  ""
+        for partition, partition_df in v.groupby("SystemPartition"):
+            partition_abr = partition[partition.find("_")+1:partition.find(" -")]
+            fig = create_plot(data_frame=partition_df, test_name=f"{k} - {partition_abr}")
+            filename = f"{k}_{partition_abr}.png"
+
+            table_data = get_last_n_runs(partition_df, 2)
+            table_html = build_table(k, table_data.to_dict(orient="records"))
+
+            image_tag = f'<ac:image><ri:attachment ri:filename="{filename}" /></ac:image>'
+            inner = image_tag + table_html
+            test_sections += wrap_in_expand(partition, inner)
+
+            upload_plot(confluence_obj, os.environ.get('CONFLUENCE_SPACE_ID'), filename, fig)
+
+        body += test_sections
+
+    try:
+        confluence_obj.update_page(page_id=os.environ.get('CONFLUENCE_SPACE_ID'), title=page["title"], body=body)
+    except:
+        pass
+            #plot_k_test = create_plot(data_frame=v, test_name=k)
+            #k_content = get_last_n_runs(v, 2).to_dict(orient="records")
+            #print(k_content)
+            #if k in body:
+            #    print("Table Existed")
+            #    body = update_table(body, k, k_content)
+            #else:
+            #    print("Table was new")
+            #    body += build_table(k, k_content)
+            #try:
+            #    confluence_obj.update_page(page_id=os.environ.get('CONFLUENCE_SPACE_ID'), title=page["title"], body=body)
+            #except:
+            #    continue
+            #upload_plot(confluence_obj=confluence_obj, page_id=os.environ.get('CONFLUENCE_SPACE_ID'), filename=f"{k}.png", fig=plot_k_test, table_name=k)
