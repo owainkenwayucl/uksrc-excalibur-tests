@@ -41,11 +41,7 @@ class FftBenmchmarkBase(SpackTest):
         self.bench_name = "FFT_Bench"
         self.output_dict_list = []
 
-    @run_before('run')
-    def replace_launcher(self):
-        self.job.launcher = getlauncher('local')()
-
-    @run_after('setup')
+    @run_before('setup')
     def setup_variables(self):
         self.num_tasks = self.tasks
         self.num_cpus_per_task = self.cpus_per_task
@@ -57,6 +53,10 @@ class FftBenmchmarkBase(SpackTest):
         # this has to be done after setup because we need to add entries to
         # ReFrame built-in `env_vars` variable.
         self.env_vars['OMP_NUM_THREADS'] = f'{self.num_cpus_per_task}'
+
+    @run_before('run')
+    def replace_launcher(self):
+        self.job.launcher = getlauncher('local')()
 
     @sanity_function
     def validate(self):
@@ -110,7 +110,7 @@ class FftBenchmarkCPU(FftBenmchmarkBase):
     fft_output_file = './FFTW_only.txt'
     executable_opts = ["-o", fft_output_file, "-f", "-r", NUMBER_OF_TRANSFORMS, "-c", NUMBER_OF_REPEATS]
 
-    @run_after('setup')
+    @run_before('setup')
     def setup_variables(self):
         self.num_tasks = self.tasks
         self.num_cpus_per_task = self.cpus_per_task
@@ -141,7 +141,7 @@ class FftBenchmarkCUDA(FftBenmchmarkBase):
     fft_output_file = 'FFTW_cuFFT.txt'
     executable_opts = ["-o", fft_output_file, "-f", "-n", "-r", NUMBER_OF_TRANSFORMS, "-c", NUMBER_OF_REPEATS]
 
-    @run_after('setup')
+    @run_before('setup')
     def setup_variables(self):
         self.num_tasks = self.tasks
         self.num_cpus_per_task = self.cpus_per_task
@@ -159,7 +159,7 @@ class FftBenchmarkROCM(FftBenmchmarkBase):
     fft_output_file = 'FFTW_rocFFT.txt'
     executable_opts = ["-o", fft_output_file, "-f", "-a", "-r", NUMBER_OF_TRANSFORMS, "-c", NUMBER_OF_REPEATS]
 
-    @run_after('setup')
+    @run_before('setup')
     def setup_variables(self):
         self.num_tasks = self.tasks
         self.num_cpus_per_task = self.cpus_per_task
