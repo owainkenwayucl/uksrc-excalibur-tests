@@ -1,0 +1,32 @@
+FROM ubuntu:latest
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    python3-venv \
+    git \
+    curl \
+    build-essential \
+    gfortran \
+    && rm -rf /var/lib/apt/lists/*
+
+# Clone and install the benchmarks repo
+RUN git clone https://github.com/uksrc-sys-team/uksrc-excalibur-tests.git /opt/uksrc-excalibur-tests
+WORKDIR /opt/uksrc-excalibur-tests
+RUN pip install --break-system-packages ".[test]"
+
+# Install Spack
+RUN git clone --depth=1 https://github.com/spack/spack.git /opt/spack
+ENV SPACK_ROOT=/opt/spack
+ENV PATH="$SPACK_ROOT/bin:$PATH"
+
+# Setup Spack Environment
+RUN spack env create --without-view -d /opt/excalibur_spack_env
+ENV EXCALIBUR_SPACK_ENV=/opt/excalibur_spack_env
+RUN spack env activate $EXCALIBUR_SPACK_ENV && spack config add 'config:install_tree:root:$env/opt/spack'
+RUN spack -e $EXCALIBUR_SPACK_ENV repo add /opt/uksrc-excalibur-tests/benchmarks/spack/repo 
+RUN spack env activate $EXCALIBUR_SPACK_ENV && spack compiler find 
+RUN spack env activate $EXCALIBUR_SPACK_ENV && spack external find
+
