@@ -9,8 +9,11 @@ from reframe.core.builtins import sanity_function, parameter, run_before, run_af
 
 from astropy.io import fits
 
+from benchmarks.modules.utils import ContainerTest
+
+
 @rfm.simple_test
-class MicrobenchMULTIWAVE(rfm.RunOnlyRegressionTest):
+class MicrobenchMULTIWAVE(ContainerTest):
     bench_name="MicrobenchMULTIWAVE"
     valid_systems = ['*']
     valid_prog_environs = ['default']

@@ -7,9 +7,10 @@ import reframe as rfm
 from reframe.core.backends import getlauncher
 from reframe.core.builtins import sanity_function, parameter, run_before, run_after, performance_function
 
+from benchmarks.modules.utils import ContainerTest
 
 @rfm.simple_test
-class MicrobenchLOFARINT(rfm.RunOnlyRegressionTest):
+class MicrobenchLOFARINT(ContainerTest):
     bench_name="MicrobenchLOFARINT"
     valid_systems = ['*']
     valid_prog_environs = ['default']

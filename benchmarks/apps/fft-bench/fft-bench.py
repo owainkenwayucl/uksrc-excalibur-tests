@@ -18,6 +18,8 @@ class FftBenmchmarkBase(SpackTest):
     # partition which has the named feature, `-feature` is a partition which
     # does not have the named feature.  This is a CPU-only benchmark, so we use
     # `-gpu` to exclude GPU partitions.
+    bench_name = "FFT_Bench"
+    output_dict_list = []
     valid_systems = ['*']
     valid_prog_environs = ['default']
     tasks = parameter([1])
@@ -35,11 +37,7 @@ class FftBenmchmarkBase(SpackTest):
         }
     }
 
-    fft_output_file = "./default.txt"
-
-    def __init__(self):
-        self.bench_name = "FFT_Bench"
-        self.output_dict_list = []
+    output_file = "default.txt"
 
     @run_before('setup')
     def setup_variables(self):
@@ -54,13 +52,9 @@ class FftBenmchmarkBase(SpackTest):
         # ReFrame built-in `env_vars` variable.
         self.env_vars['OMP_NUM_THREADS'] = f'{self.num_cpus_per_task}'
 
-    @run_before('run')
-    def replace_launcher(self):
-        self.job.launcher = getlauncher('local')()
-
     @sanity_function
     def validate(self):
-        return sn.assert_true(os.path.isfile(self.stagedir + '/' + self.fft_output_file))
+        return sn.assert_true(os.path.isfile(self.outputdir + '/' + self.output_file))
 
     @run_before("performance")
     def output_list_dict(self):
@@ -73,7 +67,7 @@ class FftBenmchmarkBase(SpackTest):
         """
         pattern = r'(?P<Library>\S+), (?P<Mem_Size>\S+), (?P<ExecutionTime>\S+),'
         output_list = sn.extractall(pattern,
-                                    pathlib.Path(self.stagedir) / self.fft_output_file,
+                                    pathlib.Path(self.outputdir) / self.output_file,
                                     ['Library', 'Mem_Size', 'ExecutionTime'],
                                     [str, float, float])
         time_of_test = str(dt.now().strftime("%Y-%m-%d-%H:%M"))
@@ -107,8 +101,8 @@ class FftBenchmarkCPU(FftBenmchmarkBase):
     # -a Run with AMD rocFFT Library
     # -r int = Number of runs to perform (min 1, max 7)
     # -c int = Number of times to repeat the transforms, for averaging times.
-    fft_output_file = './FFTW_only.txt'
-    executable_opts = ["-o", fft_output_file, "-f", "-r", NUMBER_OF_TRANSFORMS, "-c", NUMBER_OF_REPEATS]
+    output_file = 'FFTW_only.txt'
+
 
     @run_before('setup')
     def setup_variables(self):
@@ -117,19 +111,10 @@ class FftBenchmarkCPU(FftBenmchmarkBase):
         self.tags.add("+fftw")
         self.env_vars['OMP_NUM_THREADS'] = f'{self.num_cpus_per_task}'
 
-#@rfm.simple_test
-#class FftBenchmarkMKL(FftBenmchmarkBase):
-#    valid_systems = ['-gpu']
-#    spack_spec = 'fft-bench@0.3+mkl'
-#    fft_output_file = "./MKL_only.txt"
-#    executable_opts = ["-o", fft_output_file, "-f", "-r", NUMBER_OF_TRANSFORMS, "-c", NUMBER_OF_REPEATS]
-#
-#    @run_after('setup')
-#    def setup_variables(self):
-#        self.num_tasks = self.tasks
-#        self.num_cpus_per_task = self.cpus_per_task
-#        self.tags.add("mkl")
-#        self.env_vars['OMP_NUM_THREADS'] = f'{self.num_cpus_per_task}'
+    @run_after('setup')
+    def setting_call(self):
+        self.executable_opts = ["-o", f"{self.outputdir}/{self.output_file}", "-f", "-r", NUMBER_OF_TRANSFORMS, "-c", NUMBER_OF_REPEATS]
+
 
 @rfm.simple_test
 class FftBenchmarkCUDA(FftBenmchmarkBase):
@@ -138,8 +123,7 @@ class FftBenchmarkCUDA(FftBenmchmarkBase):
     spack_logfile = 'spack-build-log-cuda.txt'
     num_gpus_per_node = 1
 
-    fft_output_file = 'FFTW_cuFFT.txt'
-    executable_opts = ["-o", fft_output_file, "-f", "-n", "-r", NUMBER_OF_TRANSFORMS, "-c", NUMBER_OF_REPEATS]
+    output_file = 'FFTW_cuFFT.txt'
 
     @run_before('setup')
     def setup_variables(self):
@@ -149,6 +133,10 @@ class FftBenchmarkCUDA(FftBenmchmarkBase):
         self.env_vars['OMP_NUM_THREADS'] = f'{self.num_cpus_per_task}'
         self.extra_resources['gpu'] = {'num_gpus_per_node': self.num_gpus_per_node}
 
+    @run_after('setup')
+    def setting_call(self):
+        self.executable_opts = ["-o", f"{self.outputdir}/{self.output_file}", "-f", "-n", "-r", NUMBER_OF_TRANSFORMS, "-c", NUMBER_OF_REPEATS]
+
 @rfm.simple_test
 class FftBenchmarkROCM(FftBenmchmarkBase):
     valid_systems = ['+gpu +rocm']
@@ -156,8 +144,8 @@ class FftBenchmarkROCM(FftBenmchmarkBase):
     spack_logfile = 'spack-build-log-rocm.txt'
     num_gpus_per_node = 1
 
-    fft_output_file = 'FFTW_rocFFT.txt'
-    executable_opts = ["-o", fft_output_file, "-f", "-a", "-r", NUMBER_OF_TRANSFORMS, "-c", NUMBER_OF_REPEATS]
+    output_file = 'FFTW_rocFFT.txt'
+    executable_opts = ["-o", output_file, "-f", "-a", "-r", NUMBER_OF_TRANSFORMS, "-c", NUMBER_OF_REPEATS]
 
     @run_before('setup')
     def setup_variables(self):
@@ -166,3 +154,7 @@ class FftBenchmarkROCM(FftBenmchmarkBase):
         self.tags.add("+fftw+rocm")
         self.env_vars['OMP_NUM_THREADS'] = f'{self.num_cpus_per_task}'
         self.extra_resources['gpu'] = {'num_gpus_per_node': self.num_gpus_per_node}
+
+    @run_after('setup')
+    def setting_call(self):
+        self.executable_opts = ["-o", f"{self.outputdir}/{self.output_file}", "-f", "-a", "-r", NUMBER_OF_TRANSFORMS, "-c", NUMBER_OF_REPEATS]

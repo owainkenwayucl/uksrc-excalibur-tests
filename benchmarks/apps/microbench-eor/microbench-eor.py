@@ -9,8 +9,11 @@ from reframe.core.builtins import sanity_function, parameter, run_before, run_af
 
 from astropy.io import fits
 
+from benchmarks.modules.utils import ContainerTest
+
+
 @rfm.simple_test
-class MicrobenchEOR(rfm.RunOnlyRegressionTest):
+class MicrobenchEOR(ContainerTest):
     bench_name="MicrobenchEOR"
     valid_systems = ['*']
     valid_prog_environs = ['default']
