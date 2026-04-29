@@ -5,7 +5,7 @@ import reframe.utility.sanity as sn
 
 import reframe as rfm
 from reframe.core.backends import getlauncher
-from reframe.core.builtins import sanity_function, parameter, run_before, run_after, performance_function
+from reframe.core.builtins import sanity_function, parameter, run_before, run_after, performance_function, variable
 
 from benchmarks.modules.utils import SpackTest
 
@@ -26,6 +26,9 @@ class FftBenmchmarkBase(SpackTest):
     num_tasks_per_node = 1
     cpus_per_task = parameter([16])
     time_limit = '2h'
+    container_path = variable(str, value="/opt/uksrc-excalibur-tests")
+    transform_count = variable(str, value=NUMBER_OF_TRANSFORMS)
+    repeat_count = variable(str, value=NUMBER_OF_REPEATS)
 
     executable = 'FFT_Bench'
 
@@ -38,6 +41,12 @@ class FftBenmchmarkBase(SpackTest):
     }
 
     output_file = "default.txt"
+
+    @run_before('setup')
+    def set_container_cmd(self):
+        import inspect
+        path = inspect.getfile(type(self))
+        self.container_cmd = f'reframe --system=default -c {self.container_path}/{path[path.find("benchmarks/apps"):]} -n {type(self).__name__} -S {type(self).__name__}.transform_count={self.transform_count} -S {type(self).__name__}.repeat_count={self.repeat_count} -r'
 
     @run_before('setup')
     def setup_variables(self):
@@ -103,7 +112,6 @@ class FftBenchmarkCPU(FftBenmchmarkBase):
     # -c int = Number of times to repeat the transforms, for averaging times.
     output_file = 'FFTW_only.txt'
 
-
     @run_before('setup')
     def setup_variables(self):
         self.num_tasks = self.tasks
@@ -113,7 +121,7 @@ class FftBenchmarkCPU(FftBenmchmarkBase):
 
     @run_after('setup')
     def setting_call(self):
-        self.executable_opts = ["-o", f"{self.outputdir}/{self.output_file}", "-f", "-r", NUMBER_OF_TRANSFORMS, "-c", NUMBER_OF_REPEATS]
+        self.executable_opts = ["-o", f"{self.outputdir}/{self.output_file}", "-f", "-r", self.transform_count, "-c", self.repeat_count]
 
 
 @rfm.simple_test
@@ -122,7 +130,6 @@ class FftBenchmarkCUDA(FftBenmchmarkBase):
     spack_spec = 'fft-bench@0.3+fftw+cuda~rocm'
     spack_logfile = 'spack-build-log-cuda.txt'
     num_gpus_per_node = 1
-
     output_file = 'FFTW_cuFFT.txt'
 
     @run_before('setup')
@@ -135,7 +142,7 @@ class FftBenchmarkCUDA(FftBenmchmarkBase):
 
     @run_after('setup')
     def setting_call(self):
-        self.executable_opts = ["-o", f"{self.outputdir}/{self.output_file}", "-f", "-n", "-r", NUMBER_OF_TRANSFORMS, "-c", NUMBER_OF_REPEATS]
+        self.executable_opts = ["-o", f"{self.outputdir}/{self.output_file}", "-f", "-n", "-r", self.transform_count, "-c", self.repeat_count]
 
 @rfm.simple_test
 class FftBenchmarkROCM(FftBenmchmarkBase):
@@ -143,9 +150,7 @@ class FftBenchmarkROCM(FftBenmchmarkBase):
     spack_spec = 'fft-bench@0.3+fftw+rocm~cuda'
     spack_logfile = 'spack-build-log-rocm.txt'
     num_gpus_per_node = 1
-
     output_file = 'FFTW_rocFFT.txt'
-    executable_opts = ["-o", output_file, "-f", "-a", "-r", NUMBER_OF_TRANSFORMS, "-c", NUMBER_OF_REPEATS]
 
     @run_before('setup')
     def setup_variables(self):
@@ -157,4 +162,4 @@ class FftBenchmarkROCM(FftBenmchmarkBase):
 
     @run_after('setup')
     def setting_call(self):
-        self.executable_opts = ["-o", f"{self.outputdir}/{self.output_file}", "-f", "-a", "-r", NUMBER_OF_TRANSFORMS, "-c", NUMBER_OF_REPEATS]
+        self.executable_opts = ["-o", f"{self.outputdir}/{self.output_file}", "-f", "-a", "-r", self.transform_count, "-c", self.repeat_count]
