@@ -394,10 +394,13 @@ class CanfarJobScheduler(JobScheduler):
         raise NotImplementedError('canfar scheduler does not support node filtering')
 
     def submit(self, job):
+        open(os.path.join(job.outputdir.replace('/output/', '/stage/'), job.stdout), 'w').close()
+        open(os.path.join(job.outputdir.replace('/output/', '/stage/'), job.stderr), 'w').close()
         if self.connection_session is None:
             raise JobSchedulerError('canfar package is required for the canfar scheduler')
         job._session_name = job.name.lower()[:job.name.find(' ')]
         try:
+            print('submitting job with cmd: \n{}'.format(job.container_cmd.replace(" ", "\t")))
             job._jobid =  self.connection_session.create(
                 name="headless-test",
                 image=job.container_image,
@@ -405,8 +408,9 @@ class CanfarJobScheduler(JobScheduler):
                 cmd="bash",
                 env=job.env_variables,
                 # in order to allow commands to remain as one argument for "bash -c <commands>" we replace the spaces with \t
-                args="-c " + job.container_cmd.replace(" ", "\t")
+                args="-c " + 'echo\t' + job.container_cmd.replace(" ", "\t") + '&&' + job.container_cmd.replace(" ", "\t")
             )[0]
+            print(f"Session ID = {job._jobid}")
         except:
             raise JobError
         job._submit_time = time.time()
@@ -414,7 +418,7 @@ class CanfarJobScheduler(JobScheduler):
         self.log(f'submitted canfar job: {job._jobid}')
 
     def cancel(self, job):
-        self.connection_session.destroy(job._jobid)
+        #self.connection_session.destroy(job._jobid)
         job._cancelled = True
 
     def wait(self, job):
@@ -1130,7 +1134,7 @@ site_configuration = {
             'name': 'kind',
             'descr': 'Local Kubernetes (kind) cluster',
             'hostnames': ['.*'],
-            'prefix': stage_prefix,
+#            'prefix': stage_prefix,
             'partitions': [
                 {
                     'name': 'default',
@@ -1148,7 +1152,6 @@ site_configuration = {
             'name': 'canfar',
             'descr': 'canfar submission',
             'hostnames': ['.*'],
-            'prefix': stage_prefix,
             'partitions': [
                 {
                     'name': 'default',
