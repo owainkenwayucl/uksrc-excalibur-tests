@@ -12,6 +12,7 @@ class IORBenchmark(SpackTest):
 
     # New mandatory fields
     bench_name = "IOR"
+    output_dict_list = []
 
     # Run configuration
     block_size = variable(str, value="1m")
