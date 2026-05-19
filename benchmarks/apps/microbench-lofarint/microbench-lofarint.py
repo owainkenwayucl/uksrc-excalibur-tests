@@ -14,6 +14,7 @@ class MicrobenchLOFARINT(ContainerTest):
     bench_name="MicrobenchLOFARINT"
     valid_systems = ['*']
     valid_prog_environs = ['default']
+    output_file = "Default.txt"
 
     code_dir = ""
     LINC_dir = ""
