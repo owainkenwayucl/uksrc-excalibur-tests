@@ -10,6 +10,9 @@ import secrets
 @rfm.simple_test
 class IORBenchmark(SpackTest):
 
+    # New mandatory fields
+    bench_name = "IOR"
+
     # Run configuration
     block_size = variable(str, value="1m")
     transfer_size = variable(str, value="1m")
