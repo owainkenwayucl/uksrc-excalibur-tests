@@ -5,7 +5,7 @@ import reframe.utility.sanity as sn
 
 import reframe as rfm
 from reframe.core.backends import getlauncher
-from reframe.core.builtins import sanity_function, parameter, run_before, run_after, performance_function
+from reframe.core.builtins import sanity_function, parameter, run_before, run_after, performance_function, variable
 
 from astropy.io import fits
 
@@ -59,6 +59,9 @@ class MicrobenchEOR(ContainerTest):
     def add_prerun_cmds(self):
         self.prerun_cmds = [
             f"echo \"Workflow start: $(date '+%Y-%m-%d %H:%M:%S')\" > {self.outputdir}/output.log"
+        ]
+        self.postrun_cmds = [
+            f"echo \"Workflow end: $(date '+%Y-%m-%d %H:%M:%S')\" >> {self.outputdir}/output.log"
         ]
 
     @run_before('run')
@@ -119,6 +122,19 @@ class MicrobenchEOR(ContainerTest):
         ]
         print(self.output_dict_list)
 
+
+@rfm.simple_test
+class MicrobenchEORContainer(ContainerTest):
+    bench_name = "MicrobenchEOR"
+    valid_systems = ['kind', 'canfar']
+    valid_prog_environs = ['default']
+    container_image = "spsrc26.iaa.csic.es/"
+
+    tasks = parameter([1])
+    num_tasks_per_node = 1
+    cpus_per_task = parameter([16])
+    ram_request = variable(int, value=8)
+    work_directory = variable(str, value="/opt/hera_work")
 #    @performance_function('notAmetric')
 #    def dont_send_confluence(self):
 #        return 1

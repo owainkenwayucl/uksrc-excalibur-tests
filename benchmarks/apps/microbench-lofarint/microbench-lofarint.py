@@ -127,6 +127,9 @@ class MicrobenchLOFARINT(ContainerTest):
             '"${TOIL_COMMAND}" > '+self.output_dir+'setup.out && STATUS=${?} || STATUS=${?}',
             f"echo \"Workflow start: $(date '+%Y-%m-%d %H:%M:%S')\" > {self.outputdir}/output.log"
         ]
+        self.postrun_cmds = [
+            f"echo \"Workflow end: $(date '+%Y-%m-%d %H:%M:%S')\" >> {self.outputdir}/output.log"
+        ]
 
     @run_after('setup')
     def creat_json(self):
@@ -191,10 +194,6 @@ class MicrobenchLOFARINT(ContainerTest):
             f"{self.VLBI_dir}/workflows/setup.cwl",
             f"{self.data_dir}/parameters.json"
         ]
-
-    @run_after('run')
-    def post_run_cmd(self):
-        subprocess.run(f"echo \"Workflow end: $(date '+%Y-%m-%d %H:%M:%S')\" >> {self.outputdir}/output.log", shell=True)
 
     @sanity_function
     def validate(self):

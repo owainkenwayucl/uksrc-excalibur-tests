@@ -72,6 +72,9 @@ class MicrobenchMULTIWAVE(ContainerTest):
             f"cd {self.outputdir}",
             f"echo \"Workflow start: $(date '+%Y-%m-%d %H:%M:%S')\" > {self.outputdir}/output.log"
         ]
+        self.postrun_cmds = [
+            f"echo \"Workflow end: $(date '+%Y-%m-%d %H:%M:%S')\" >> {self.outputdir}/output.log"
+        ]
 
     @run_before('run')
     def set_executable_opts(self):
