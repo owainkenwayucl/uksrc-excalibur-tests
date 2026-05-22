@@ -268,10 +268,11 @@ class ContainerTest(rfm.RegressionTest, special=True):
         loggable=True,
     )
 
+    # Run only tests need to set this variable to True
+    run_only_test = False
     #: The command to run inside the container. Defaults to running the
     #: current test via ReFrame inside the container.
     container_cmd = variable(str, value="", loggable=True)
-
     env_variables = variable(dict, value={}, loggable=True)
 
     def __init__(self):
@@ -298,17 +299,17 @@ class ContainerTest(rfm.RegressionTest, special=True):
 
 
     def compile(self):
-        if getattr(self.current_partition.scheduler, 'container_scheduler', False):
+        if getattr(self.current_partition.scheduler, 'container_scheduler', False) or self.run_only_test:
             return
         super().compile()
 
     def compile_wait(self):
-        if getattr(self.current_partition.scheduler, 'container_scheduler', False):
+        if getattr(self.current_partition.scheduler, 'container_scheduler', False) or self.run_only_test:
             return
         super().compile_wait()
 
     def compile_complete(self):
-        if getattr(self.current_partition.scheduler, 'container_scheduler', False):
+        if getattr(self.current_partition.scheduler, 'container_scheduler', False) or self.run_only_test:
             return True
         return super().compile_complete()
 
