@@ -17,6 +17,7 @@ class MicrobenchEOR(ContainerTest):
     bench_name="MicrobenchEOR"
     valid_systems = ['*']
     valid_prog_environs = ['default']
+    run_only_test = True
 
     code_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "EOR_Code")
     data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "EOR_Data")
@@ -26,6 +27,8 @@ class MicrobenchEOR(ContainerTest):
     tasks = parameter([1])
     num_tasks_per_node = 1
     cpus_per_task = parameter([16])
+
+    container_image = "spsrc26.iaa.csic.es/"
 
     executable = "apptainer"
 
@@ -121,28 +124,3 @@ class MicrobenchEOR(ContainerTest):
             }
         ]
         print(self.output_dict_list)
-
-
-@rfm.simple_test
-class MicrobenchEORContainer(ContainerTest):
-    bench_name = "MicrobenchEOR"
-    valid_systems = ['kind', 'canfar']
-    valid_prog_environs = ['default']
-    container_image = "spsrc26.iaa.csic.es/"
-
-    tasks = parameter([1])
-    num_tasks_per_node = 1
-    cpus_per_task = parameter([16])
-    ram_request = variable(int, value=8)
-    work_directory = variable(str, value="/opt/hera_work")
-#    @performance_function('notAmetric')
-#    def dont_send_confluence(self):
-#        return 1
-
-#    @run_after('performance')
-#    def free_space(self):
-#        og_dir = os.getcwd()
-#        os.chdir(os.path.join(self.code_dir, "singularity_images"))
-#        subprocess.run(f"rm -f hera-pspec-mambaorg.sif", shell=True)
-#        subprocess.run(f"rm -f {os.path.join(self.data_dir, 'NF_HERA_Dipole_power_beam_healpix.fits')}", shell=True)
-#        os.chdir(og_dir)
