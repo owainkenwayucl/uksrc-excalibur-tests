@@ -366,7 +366,7 @@ class CanfarJobScheduler(JobScheduler):
     Usage in site_configuration partitions:
         {
             'name': '<partition name>',
-            'scheduler': 'k8s',
+            'scheduler': 'canfar',
             'launcher': 'local',
             'access': [
                 '--image=<image>:latest',
