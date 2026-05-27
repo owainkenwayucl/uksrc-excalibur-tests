@@ -264,7 +264,7 @@ class ContainerTest(rfm.RegressionTest, special=True):
     #: The container image to use when submitting to a container scheduler.
     container_image = variable(
         str,
-        value='spsrc26.iaa.csic.es/srcnet-benchmarks/uksrc_excalibur_tests_base:0.1.1',
+        value='spsrc26.iaa.csic.es/srcnet-benchmarks/uksrc_excalibur_tests_base:0.1.2',
         loggable=True,
     )
 
@@ -334,6 +334,7 @@ class SpackTest(ContainerTest): #(rfm.RegressionTest):
         if getattr(self.current_partition.scheduler, 'container_scheduler', False):
             self.pre_container_stage = f'{self.stagedir}/rfm_job.out'
             subprocess.run(f'echo "spack_spec_dict: $(spack -e {os.path.join(dest, subdir)} python -c \'{cmd_spack_spec_dict}\')" >> {self.stagedir}/rfm_job.out', shell=True)
+            self.postrun_cmds.append(f'cat {self.stagedir}/rfm_job.out')
             return
         self.build_system.environment = os.path.join(dest, subdir)
         # Base name and full path of common settings file.
@@ -352,8 +353,8 @@ class SpackTest(ContainerTest): #(rfm.RegressionTest):
             f'(cd {cp_dir}; find . \\( -name "spack.yaml" -o -name "compilers.yaml" -o -name "packages.yaml" -o -name "upstreams.yaml" \\) -print0 | xargs -0 tar cf - | tar -C {dest} -xvf -)',
             f'spack -e {self.build_system.environment} config add "config:install_tree:root:{env_dir}/opt"',
         ]
+
         self.postrun_cmds.append(f'echo "spack_spec_dict: $(spack -e {self.build_system.environment} python -c \'{cmd_spack_spec_dict}\')" >> {self.stagedir}/rfm_job.out')
-        self.postrun_cmds.append(f'cat {self.stagedir}/rfm_job.out')
 
         # Keep the `spack.lock` file in the output directory so that the Spack
         # environment can be faithfully reproduced later.
@@ -396,8 +397,9 @@ class SpackTest(ContainerTest): #(rfm.RegressionTest):
                 viewer_cmd = 'advisor-gui'
                 viewer_args = f'{self.outputdir}/{output_path}'
             elif self.profiler == 'nsight':
+                pkg_spec = 'nvidia-nsight-systems'
                 # Spack package providing the profiler
-                self.build_system.specs.append('nvidia-nsight-systems')
+                self.build_system.specs.append(pkg_spec)
                 # Name of output file
                 output_path = 'nsys-trace'
                 # Prepend nsys call to the executable
@@ -418,6 +420,38 @@ class SpackTest(ContainerTest): #(rfm.RegressionTest):
                 self.keep_files.append(f'{output_path}*')
                 viewer_cmd = 'vtune-gui'
                 viewer_args = f'{self.outputdir}/{output_path}*'
+            elif self.profiler == 'likwid':
+                pkg_spec = 'likwid'
+                # Spack package providing the profiler
+                self.build_system.specs.append(pkg_spec)
+                # Name of output directory
+                output_path = 'likwid-profiling'
+                # Prepend VTune call to the executable
+                self.prerun_cmds += [
+                    f"export LIK_OUTPUT_DIR={os.path.join(self.outputdir, output_path)}",
+                    "mkdir ${LIK_OUTPUT_DIR}",
+                    "export LIK_OUTPUT=${LIK_OUTPUT_DIR}/likwid_performance_out.txt",
+                    f"export CPU_PER_TASK={self.num_cpus_per_task}",
+                    "export THREAD_COUNT=$(($(lscpu | awk '/Thread\(s\) per core:/ {print $4}') * CPU_PER_TASK))",
+                    "export STREAM_SIZE=$((10 * THREAD_COUNT))kB",
+                    "echo 'Scalar MFlops/s' > ${LIK_OUTPUT}",
+                    "likwid-bench -t peakflops -W N:${STREAM_SIZE}:${THREAD_COUNT} | grep 'MFlops/s:' >> ${LIK_OUTPUT}",
+                    "echo 'Scalar MByte/s' >> ${LIK_OUTPUT}",
+                    "likwid-bench -t load -W N:8GB:${THREAD_COUNT} | grep 'MByte/s:' >> ${LIK_OUTPUT}",
+                    'python -c "import pyprofqueue.profilers.likwid as lik; lik.create_custom_group();"',
+                    "export ARCHITECTURE=$(likwid-perfctr -i | awk '/CPU short:/ {print $NF}')",
+                    "mkdir -p $HOME/.likwid/groups/$ARCHITECTURE",
+                    "cp ./PYPROFQUEUE.txt $HOME/.likwid/groups/$ARCHITECTURE/PYPROFQUEUE.txt"
+                ]
+                self.executable = f'likwid-perfctr -g PYPROFQUEUE -t 120s -O -f ' + self.executable + " 2> ${LIK_OUTPUT_DIR}/temp_likwid.txt > ${LIK_OUTPUT_DIR}/temp_out.txt"
+                self.postrun_cmds += [
+                    "sed -n '/^# HWThreads:/,+1p' ${LIK_OUTPUT_DIR}/temp_out.txt > ${LIK_OUTPUT_DIR}/likwid_output.txt",
+                    "sed '/^$/Q' ${LIK_OUTPUT_DIR}/temp_likwid.txt >> ${LIK_OUTPUT_DIR}/likwid_output.txt",
+                ]
+                # Save the output directory
+                self.keep_files.append(f'{output_path}*')
+                #viewer_cmd = '<>'
+                #viewer_args = f'{self.outputdir}/{output_path}*'
             else:
                 raise CommandLineError(f'Unknown profiler {self.profiler}')
 
